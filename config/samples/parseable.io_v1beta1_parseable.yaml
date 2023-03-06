@@ -1,0 +1,12 @@
+apiVersion: parseable.io.parseable.io/v1beta1
+kind: Parseable
+metadata:
+  labels:
+    app.kubernetes.io/name: parseable
+    app.kubernetes.io/instance: parseable-sample
+    app.kubernetes.io/part-of: parseable-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: parseable-operator
+  name: parseable-sample
+spec:
+  # TODO(user): Add fields here

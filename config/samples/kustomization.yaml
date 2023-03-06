@@ -1,0 +1,5 @@
+## Append samples of your project ##
+resources:
+- parseable.io_v1beta1_parseable.yaml
+- parseable.io_v1beta1_parseabletenant.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples
