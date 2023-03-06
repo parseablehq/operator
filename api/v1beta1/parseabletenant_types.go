@@ -84,6 +84,7 @@ type ParseableTenant struct {
 }
 
 //+kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // ParseableTenantList contains a list of ParseableTenant
 type ParseableTenantList struct {
