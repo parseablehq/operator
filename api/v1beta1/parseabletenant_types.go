@@ -19,7 +19,6 @@
 package v1beta1
 
 import (
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -49,8 +48,8 @@ type ObjectStoreConfig struct {
 }
 
 type K8sConfigGroupSpec struct {
-	Name string     `json:"name"`
-	Spec v1.PodSpec `json:"spec,omitempty"`
+	Name string `json:"name"`
+	//Spec v1.PodSpec `json:"spec"`
 }
 
 type ParseableConfigGroupSpec struct {
@@ -62,6 +61,7 @@ type ParseableConfigGroupSpec struct {
 type NodeSpec struct {
 	Name                 string `json:"name"`
 	Kind                 string `json:"kind"`
+	NodeType             string `json:"nodeType"`
 	Replicas             int    `json:"replicas"`
 	K8sConfigGroup       string `json:"k8sConfigGroup"`
 	ParseableConfigGroup string `json:"parseableConfigGroup"`
@@ -86,7 +86,7 @@ type ParseableTenant struct {
 }
 
 //+kubebuilder:object:root=true
-// +kubebuilder:subresource:status
+//+kubebuilder:subresource:status
 
 // ParseableTenantList contains a list of ParseableTenant
 type ParseableTenantList struct {

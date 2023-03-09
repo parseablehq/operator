@@ -20,12 +20,15 @@ package controller
 
 import (
 	"context"
+	"time"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/parseablehq/parseable-operator/api/v1beta1"
 	parseableiov1beta1 "github.com/parseablehq/parseable-operator/api/v1beta1"
 )
 
@@ -35,9 +38,9 @@ type ParseableTenantReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=parseable.io.parseable.io,resources=parseabletenants,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=parseable.io.parseable.io,resources=parseabletenants/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=parseable.io.parseable.io,resources=parseabletenants/finalizers,verbs=update
+//+kubebuilder:rbac:groups=parseable.io,resources=parseabletenants,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=parseable.io,resources=parseabletenants/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=parseable.io,resources=parseabletenants/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -51,9 +54,24 @@ type ParseableTenantReconciler struct {
 func (r *ParseableTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	parseableCR := &v1beta1.ParseableTenant{}
+	err := r.Get(context.TODO(), req.NamespacedName, parseableCR)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Request object not found, could have been deleted after reconcile request.
+			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+			// Return and don't requeue
+			return ctrl.Result{}, nil
+		}
+		// Error reading the object - requeue the request.
+		return ctrl.Result{}, err
+	}
 
-	return ctrl.Result{}, nil
+	if err := reconcileParseable(r.Client, parseableCR); err != nil {
+		return ctrl.Result{}, err
+	} else {
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.

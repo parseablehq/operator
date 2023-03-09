@@ -1,12 +1,48 @@
-apiVersion: parseable.io.parseable.io/v1beta1
-kind: Parseable
+apiVersion: parseable.io/v1beta1
+kind: ParseableTenant
 metadata:
-  labels:
-    app.kubernetes.io/name: parseable
-    app.kubernetes.io/instance: parseable-sample
-    app.kubernetes.io/part-of: parseable-operator
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: parseable-operator
-  name: parseable-sample
+  name: parseable
 spec:
-  # TODO(user): Add fields here
+  nodes:
+    - name: parseable-server1
+      kind: Statefulset
+      replicas: 1
+      nodeType: server
+      k8sConfigGroup: parseableserver
+      parseableConfigGroup: parseableserver
+    - name: parseable-ingestor
+      kind: Statefulset
+      replicas: 1
+      nodeType: ingestor
+      k8sConfigGroup: parseableserver
+      parseableConfigGroup: parseableserver
+    - name: parseable-server
+      kind: Statefulset
+      replicas: 1
+      nodeType: server
+      k8sConfigGroup: parseableserver
+      parseableConfigGroup: parseableserver
+  deploymentOrder:
+  - ingestor
+  - server
+  external:
+    objectStore:
+      spec:
+        type: s3
+        data: |-
+          s3.url=http://minio.minio.svc.cluster.local:9000
+          s3.access.key=minioadmin
+          s3 .secret.key=minioadmin
+          s3.region=us-east-1
+          s3.bucket=parseable
+  k8sConfigGroup:
+  - name: parseable-server
+  parseableConfigGroup:
+  - name: parseable-server
+    args: "s3-store"
+    data: |-
+      addr=0.0.0.0:8000 
+      staging.dir=./staging
+      fs.dir=./data
+      username=admin
+      password=admin  
