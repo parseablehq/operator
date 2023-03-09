@@ -1,0 +1,27 @@
+# permissions for end users to view parseables.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: parseable-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: parseable-operator
+    app.kubernetes.io/part-of: parseable-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: parseable-viewer-role
+rules:
+- apiGroups:
+  - parseable.io.parseable.io
+  resources:
+  - parseables
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - parseable.io.parseable.io
+  resources:
+  - parseables/status
+  verbs:
+  - get

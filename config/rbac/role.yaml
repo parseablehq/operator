@@ -1,0 +1,33 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - parseable.io.parseable.io
+  resources:
+  - parseabletenants
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - parseable.io.parseable.io
+  resources:
+  - parseabletenants/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - parseable.io.parseable.io
+  resources:
+  - parseabletenants/status
+  verbs:
+  - get
+  - patch
+  - update
