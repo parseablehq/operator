@@ -19,6 +19,7 @@
 package v1beta1
 
 import (
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -48,8 +49,8 @@ type ObjectStoreConfig struct {
 }
 
 type K8sConfigGroupSpec struct {
-	Name string `json:"name"`
-	//Spec v1.PodSpec `json:"spec"`
+	Name string     `json:"name"`
+	Spec v1.PodSpec `json:"spec"`
 }
 
 type ParseableConfigGroupSpec struct {

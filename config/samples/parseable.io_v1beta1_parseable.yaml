@@ -37,6 +37,12 @@ spec:
           s3.bucket=parseable
   k8sConfigGroup:
   - name: parseable-server
+    spec:
+      serviceAccountName: "parsebale-server"
+      nodeSelector: {}
+      tolerations: []
+      affinity: {}
+      containers: []
   parseableConfigGroup:
   - name: parseable-server
     args: "s3-store"
