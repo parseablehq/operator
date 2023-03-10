@@ -103,10 +103,18 @@ func (b BuilderState) CreateOrUpdate() (controllerutil.OperationResult, error) {
 			return "", err
 		}
 	} else {
-
-		fmt.Println("Update")
+		if b.DesiredState.GetAnnotations()[b.OwnerRef.Kind+"OperatorHash"] != b.CurrentState.GetAnnotations()[b.OwnerRef.Kind+"OperatorHash"] {
+			b.DesiredState.SetResourceVersion(b.CurrentState.GetResourceVersion())
+			result, err := b.Update(context.TODO())
+			if err != nil {
+				return controllerutil.OperationResultNone, err
+			} else {
+				return result, nil
+			}
+		} else {
+			return controllerutil.OperationResultNone, nil
+		}
 	}
-	return controllerutil.OperationResultNone, nil
 }
 
 func (b BuilderState) Create(ctx context.Context) (controllerutil.OperationResult, error) {
@@ -114,6 +122,14 @@ func (b BuilderState) Create(ctx context.Context) (controllerutil.OperationResul
 		return "", err
 	} else {
 		return controllerutil.OperationResultCreated, nil
+	}
+}
+
+func (b BuilderState) Update(ctx context.Context) (controllerutil.OperationResult, error) {
+	if err := b.Client.Update(ctx, b.DesiredState); err != nil {
+		return "", err
+	} else {
+		return controllerutil.OperationResultUpdated, nil
 	}
 }
 
