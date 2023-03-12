@@ -15,7 +15,7 @@ spec:
       replicas: 1
       nodeType: ingestor
       k8sConfigGroup: parseableserver
-      parseableConfigGroup: parseableserver
+      parseableConfigGroup: parseable-ongestr
     - name: parseable-server
       kind: Statefulset
       replicas: 1
@@ -23,7 +23,6 @@ spec:
       k8sConfigGroup: parseableserver
       parseableConfigGroup: parseableserver
   deploymentOrder:
-  - ingestor
   - server
   external:
     objectStore:
@@ -44,11 +43,17 @@ spec:
       affinity: {}
       containers: []
   parseableConfigGroup:
-  - name: parseable-server
-    args: "s3-store"
+  - name: parseableserver
     data: |-
       addr=0.0.0.0:8000 
       staging.dir=./staging
       fs.dir=./data
       username=admin
-      password=admin  
+      password=admin
+  - name: parseable-ongestr
+    data: |-
+      addr=0.0.0.0:8000 
+      staging.dir=./staging
+      fs.dir=./data
+      username=admin
+      password=admin 

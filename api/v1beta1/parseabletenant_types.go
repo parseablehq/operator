@@ -55,7 +55,6 @@ type K8sConfigGroupSpec struct {
 
 type ParseableConfigGroupSpec struct {
 	Name string `json:"name"`
-	Args string `json:"args"`
 	Data string `json:"data"`
 }
 

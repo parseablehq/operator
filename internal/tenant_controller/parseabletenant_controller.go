@@ -16,7 +16,7 @@
  *
  */
 
-package controller
+package parseabletenantcontroller
 
 import (
 	"context"
@@ -42,15 +42,6 @@ type ParseableTenantReconciler struct {
 //+kubebuilder:rbac:groups=parseable.io,resources=parseabletenants/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=parseable.io,resources=parseabletenants/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the ParseableTenant object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *ParseableTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
@@ -58,12 +49,8 @@ func (r *ParseableTenantReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	err := r.Get(context.TODO(), req.NamespacedName, parseableCR)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
 			return ctrl.Result{}, nil
 		}
-		// Error reading the object - requeue the request.
 		return ctrl.Result{}, err
 	}
 

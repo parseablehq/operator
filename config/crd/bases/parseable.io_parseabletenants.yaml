@@ -7650,14 +7650,11 @@ spec:
               parseableConfigGroup:
                 items:
                   properties:
-                    args:
-                      type: string
                     data:
                       type: string
                     name:
                       type: string
                   required:
-                  - args
                   - data
                   - name
                   type: object
