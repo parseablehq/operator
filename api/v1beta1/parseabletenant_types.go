@@ -49,8 +49,15 @@ type ObjectStoreConfig struct {
 }
 
 type K8sConfigGroupSpec struct {
-	Name string     `json:"name"`
-	Spec v1.PodSpec `json:"spec"`
+	Name          string          `json:"name"`
+	Spec          v1.PodSpec      `json:"spec"`
+	StorageConfig []StorageConfig `json:"storageConfig"`
+}
+
+type StorageConfig struct {
+	Name      string                   `json:"name"`
+	MountPath string                   `json:"mountPath"`
+	PvcSpec   v1.PersistentVolumeClaim `json:"pvcSpec"`
 }
 
 type ParseableConfigGroupSpec struct {

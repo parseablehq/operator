@@ -5,22 +5,22 @@ metadata:
 spec:
   nodes:
     - name: parseable-server1
-      kind: Statefulset
+      kind: Deployment
       replicas: 1
       nodeType: server
-      k8sConfigGroup: parseableserver
+      k8sConfigGroup: pp
       parseableConfigGroup: parseableserver
     - name: parseable-ingestor
-      kind: Statefulset
+      kind: Deployment
       replicas: 1
       nodeType: ingestor
-      k8sConfigGroup: parseableserver
+      k8sConfigGroup: pp
       parseableConfigGroup: parseable-ongestr
     - name: parseable-server
-      kind: Statefulset
+      kind: Deployment
       replicas: 1
       nodeType: server
-      k8sConfigGroup: parseableserver
+      k8sConfigGroup: pp
       parseableConfigGroup: parseableserver
   deploymentOrder:
   - server
@@ -35,15 +35,16 @@ spec:
           s3.region=us-east-1
           s3.bucket=parseable
   k8sConfigGroup:
-  - name: parseable-server
+  - name: pp
     spec:
-      serviceAccountName: "parsebale-server"
-      nodeSelector: {}
-      tolerations: []
-      affinity: {}
-      containers: []
+      containers:
+      - command:
+          - sleep
+          - "3600"
+        image: praqma/network-multitool
+        name: debug-network-container
   parseableConfigGroup:
-  - name: parseableserver
+  - name: pp
     data: |-
       addr=0.0.0.0:8000 
       staging.dir=./staging

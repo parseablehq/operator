@@ -22,32 +22,39 @@ func reconcileParseable(client client.Client, pt *v1beta1.ParseableTenant) error
 	nodeSpecs := getAllNodeSpecForNodeType(pt)
 
 	var parseableConfigMap []BuilderConfigMap
+	var parseableDeploymentOrStatefulset []BuilderDeploymentStatefulSet
 
 	for _, nodeSpec := range nodeSpecs {
 		for _, parseableConfig := range pt.Spec.ParseableConfigGroup {
 			if nodeSpec.NodeSpec.ParseableConfigGroup == parseableConfig.Name {
-				parseableConfigMap = append(parseableConfigMap, *makeParseableConfigMaps(pt, &parseableConfig, client, getOwnerRef))
+				parseableConfigMap = append(parseableConfigMap, *makeParseableConfigMap(pt, &parseableConfig, client, getOwnerRef))
+			}
+		}
+		for _, k8sConfig := range pt.Spec.K8sConfigGroup {
+			fmt.Println(k8sConfig.Name)
+			fmt.Println(nodeSpec.NodeSpec.K8sConfigGroup)
+			if nodeSpec.NodeSpec.K8sConfigGroup == k8sConfig.Name {
+
+				parseableDeploymentOrStatefulset = append(parseableDeploymentOrStatefulset, *makeStsOrDeploy(pt, &nodeSpec.NodeSpec, &k8sConfig, client, getOwnerRef))
 			}
 		}
 	}
-	// var cmBuilder []BuilderConfigMap
-
-	// parseableConfigMaps := makeParseableConfigMaps(pt, client, getOwnerRef)
-
-	// for _, parseableConfigMap := range *parseableConfigMaps {
-	// 	cmBuilder = append(cmBuilder, parseableConfigMap, *makeExternalConfigMap(pt, client, &parseableConfigMap.OwnerRef))
-	// }
 
 	builder := NewBuilder(
 		ToNewConfigMapBuilder(parseableConfigMap),
+		ToNewDeploymentStatefulSetBuilder(parseableDeploymentOrStatefulset),
 	)
 
-	result, err := builder.BuildConfigMap()
+	_, err := builder.BuildConfigMap()
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("%s", result)
+	resultDeploy, err := builder.BuildDeployOrSts()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Deploy %s", resultDeploy)
 
 	return nil
 }
@@ -67,7 +74,7 @@ func makeExternalConfigMap(pt *v1beta1.ParseableTenant, client client.Client, ow
 	}
 }
 
-func makeParseableConfigMaps(
+func makeParseableConfigMap(
 	pt *v1beta1.ParseableTenant,
 	parseableConfigGroup *v1beta1.ParseableConfigGroupSpec,
 	client client.Client,
@@ -89,14 +96,33 @@ func makeParseableConfigMaps(
 	return configMap
 }
 
-// func makeK8sConfigGroup(pt *v1beta1.ParseableTenant, client client.Client, ownerRef *metav1.OwnerReference) *[]BuilderDeployment {
-// 	var parseableK8sConfigs []BuilderDeployment
+func makeStsOrDeploy(
+	pt *v1beta1.ParseableTenant,
+	ptNode *v1beta1.NodeSpec,
+	k8sConfigGroup *v1beta1.K8sConfigGroupSpec,
+	client client.Client,
+	ownerRef *metav1.OwnerReference) *BuilderDeploymentStatefulSet {
 
-// 	for _, parseableK8sConfig := range pt.Spec.K8sConfigGroup {
-// 		parseableK8sConfigs = append(parseableK8sConfigs, BuilderDeployment{
-// 			Replicas: getReplicasForK8sConfigName(parseableK8sConfig.Name),
-// 		})
-// 	}
+	deployment := BuilderDeploymentStatefulSet{
+		CommonBuilder: CommonBuilder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      ptNode.K8sConfigGroup + ptNode.Name,
+				Namespace: pt.GetNamespace(),
+				Labels: map[string]string{
+					"app": "parseable",
+				},
+			},
+			Client:   client,
+			CrObject: pt,
+			OwnerRef: *ownerRef,
+		},
+		Replicas: int32(ptNode.Replicas),
+		Labels: map[string]string{
+			"app": "parseable",
+		},
+		Kind:    ptNode.Kind,
+		PodSpec: &k8sConfigGroup.Spec,
+	}
 
-// 	return &parseableK8sConfigs
-// }
+	return &deployment
+}
