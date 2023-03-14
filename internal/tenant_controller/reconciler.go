@@ -23,6 +23,7 @@ func reconcileParseable(client client.Client, pt *v1beta1.ParseableTenant) error
 
 	var parseableConfigMap []BuilderConfigMap
 	var parseableDeploymentOrStatefulset []BuilderDeploymentStatefulSet
+	var parseableStorage []BuilderStorageConfig
 
 	for _, nodeSpec := range nodeSpecs {
 		for _, parseableConfig := range pt.Spec.ParseableConfigGroup {
@@ -31,24 +32,30 @@ func reconcileParseable(client client.Client, pt *v1beta1.ParseableTenant) error
 			}
 		}
 		for _, k8sConfig := range pt.Spec.K8sConfigGroup {
-			fmt.Println(k8sConfig.Name)
-			fmt.Println(nodeSpec.NodeSpec.K8sConfigGroup)
-			if nodeSpec.NodeSpec.K8sConfigGroup == k8sConfig.Name {
-
-				parseableDeploymentOrStatefulset = append(parseableDeploymentOrStatefulset, *makeStsOrDeploy(pt, &nodeSpec.NodeSpec, &k8sConfig, client, getOwnerRef))
+			for _, storageConfig := range k8sConfig.StorageConfig {
+				if nodeSpec.NodeSpec.K8sConfigGroup == k8sConfig.Name {
+					parseableDeploymentOrStatefulset = append(parseableDeploymentOrStatefulset, *makeStsOrDeploy(pt, &nodeSpec.NodeSpec, &k8sConfig, &storageConfig, client, getOwnerRef))
+				}
+				parseableStorage = append(parseableStorage, *makePvc(pt, client, getOwnerRef, &storageConfig))
 			}
 		}
+
 	}
+
+	parseableConfigMap = append(parseableConfigMap, *makeExternalConfigMap(pt, client, getOwnerRef))
 
 	builder := NewBuilder(
 		ToNewConfigMapBuilder(parseableConfigMap),
 		ToNewDeploymentStatefulSetBuilder(parseableDeploymentOrStatefulset),
+		ToNewBuilderStorageConfig(parseableStorage),
 	)
 
-	_, err := builder.BuildConfigMap()
+	resultCm, err := builder.BuildConfigMap()
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("Cm %s", resultCm)
 
 	resultDeploy, err := builder.BuildDeployOrSts()
 	if err != nil {
@@ -56,10 +63,19 @@ func reconcileParseable(client client.Client, pt *v1beta1.ParseableTenant) error
 	}
 	fmt.Printf("Deploy %s", resultDeploy)
 
+	resultPvc, err := builder.BuildPvc()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Pvc %s", resultPvc)
+
 	return nil
 }
 
-func makeExternalConfigMap(pt *v1beta1.ParseableTenant, client client.Client, ownerRef *metav1.OwnerReference) *BuilderConfigMap {
+func makeExternalConfigMap(pt *v1beta1.ParseableTenant,
+	client client.Client,
+	ownerRef *metav1.OwnerReference,
+) *BuilderConfigMap {
 	return &BuilderConfigMap{
 		CommonBuilder: CommonBuilder{
 			ObjectMeta: metav1.ObjectMeta{Name: pt.GetName() + "-external-cm",
@@ -100,6 +116,7 @@ func makeStsOrDeploy(
 	pt *v1beta1.ParseableTenant,
 	ptNode *v1beta1.NodeSpec,
 	k8sConfigGroup *v1beta1.K8sConfigGroupSpec,
+	storageConfig *v1beta1.StorageConfig,
 	client client.Client,
 	ownerRef *metav1.OwnerReference) *BuilderDeploymentStatefulSet {
 
@@ -124,5 +141,26 @@ func makeStsOrDeploy(
 		PodSpec: &k8sConfigGroup.Spec,
 	}
 
+	deployment.PodSpec.Volumes = append(deployment.PodSpec.Volumes, k8sConfigGroup.Volumes...)
+
+	fmt.Println(deployment)
 	return &deployment
+}
+
+func makePvc(
+	pt *v1beta1.ParseableTenant,
+	client client.Client,
+	ownerRef *metav1.OwnerReference,
+	pvc *v1beta1.StorageConfig,
+) *BuilderStorageConfig {
+	return &BuilderStorageConfig{
+		CommonBuilder: CommonBuilder{
+			ObjectMeta: metav1.ObjectMeta{Name: pvc.Name,
+				Namespace: pt.GetNamespace()},
+			Client:   client,
+			CrObject: pt,
+			OwnerRef: *ownerRef,
+		},
+		PvcSpec: &pvc.PvcSpec,
+	}
 }

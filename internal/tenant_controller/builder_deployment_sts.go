@@ -91,7 +91,6 @@ func (s *Builder) BuildDeployment() (controllerutil.OperationResult, error) {
 			return controllerutil.OperationResultNone, err
 		}
 
-		fmt.Println(deployment)
 		deploy.DesiredState = deployment
 		deploy.CurrentState = &appsv1.Deployment{}
 

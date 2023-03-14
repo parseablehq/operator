@@ -40,6 +40,7 @@ func getAllNodeSpecForNodeType(pt *v1beta1.ParseableTenant) []NodeTypeNodeSpec {
 	}
 
 	allNodeSpecs := make([]NodeTypeNodeSpec, 0, len(pt.Spec.Nodes))
+
 	allNodeSpecs = append(allNodeSpecs, nodeSpecsByNodeType[pt.Spec.DeploymentOrder[0]]...)
 
 	return allNodeSpecs

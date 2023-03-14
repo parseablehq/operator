@@ -4,24 +4,12 @@ metadata:
   name: parseable
 spec:
   nodes:
-    - name: parseable-server1
+    - name: server
       kind: Deployment
       replicas: 1
       nodeType: server
-      k8sConfigGroup: pp
-      parseableConfigGroup: parseableserver
-    - name: parseable-ingestor
-      kind: Deployment
-      replicas: 1
-      nodeType: ingestor
-      k8sConfigGroup: pp
-      parseableConfigGroup: parseable-ongestr
-    - name: parseable-server
-      kind: Deployment
-      replicas: 1
-      nodeType: server
-      k8sConfigGroup: pp
-      parseableConfigGroup: parseableserver
+      k8sConfigGroup: k8s-server
+      parseableConfigGroup: server-config
   deploymentOrder:
   - server
   external:
@@ -35,26 +23,36 @@ spec:
           s3.region=us-east-1
           s3.bucket=parseable
   k8sConfigGroup:
-  - name: pp
+  - name: k8s-server
     spec:
+      volumes:
+      - name: pvctest
+        persistentVolumeClaim:
+          claimName: pvctest
       containers:
       - command:
           - sleep
           - "3600"
         image: praqma/network-multitool
         name: debug-network-container
+        volumeMounts:
+        # a mount for site-data
+        - name: pvctest
+          mountPath: /data
+    storageConfig:
+    - name: pvctest
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        storageClassName: "civo-volume"
+        resources:
+          requests:
+            storage: 10Gi
   parseableConfigGroup:
-  - name: pp
+  - name: server-config
     data: |-
       addr=0.0.0.0:8000 
       staging.dir=./staging
       fs.dir=./data
       username=admin
       password=admin
-  - name: parseable-ongestr
-    data: |-
-      addr=0.0.0.0:8000 
-      staging.dir=./staging
-      fs.dir=./data
-      username=admin
-      password=admin 
