@@ -34,7 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	parseableiov1beta1 "github.com/parseablehq/parseable-operator/api/v1beta1"
-	"github.com/parseablehq/parseable-operator/internal/controller"
+	parseabletenantcontroller "github.com/parseablehq/parseable-operator/internal/tenant_controller"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -91,7 +91,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controller.ParseableTenantReconciler{
+	if err = (&parseabletenantcontroller.ParseableTenantReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {

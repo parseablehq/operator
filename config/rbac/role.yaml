@@ -6,7 +6,7 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - parseable.io.parseable.io
+  - parseable.io
   resources:
   - parseabletenants
   verbs:
@@ -18,13 +18,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - parseable.io.parseable.io
+  - parseable.io
   resources:
   - parseabletenants/finalizers
   verbs:
   - update
 - apiGroups:
-  - parseable.io.parseable.io
+  - parseable.io
   resources:
   - parseabletenants/status
   verbs:

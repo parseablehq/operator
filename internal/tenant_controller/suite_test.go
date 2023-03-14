@@ -16,7 +16,7 @@
  *
  */
 
-package controller
+package parseabletenantcontroller
 
 import (
 	"path/filepath"

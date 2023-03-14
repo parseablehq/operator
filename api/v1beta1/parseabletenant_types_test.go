@@ -55,6 +55,16 @@ spec:
       toleration: {}
       affinity: {}
       labels: {}
+    storageConfig:
+    - name: pvctest
+      mountPath: "/var/lib"
+      pvcSpec:
+        accessModes:
+        - ReadWriteOnce
+        storageClassName: "standard"
+        resources:
+          requests:
+            storage: 10Gi
   parseableConfigGroup:
   - name: parseable-server
     args: "s3-store"
