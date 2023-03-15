@@ -4,7 +4,7 @@ metadata:
   name: parseable
 spec:
   nodes:
-    - name: server
+    - name: parseable-server
       kind: Deployment
       replicas: 1
       nodeType: server
@@ -19,28 +19,24 @@ spec:
         data: |-
           s3.url=http://minio.minio.svc.cluster.local:9000
           s3.access.key=minioadmin
-          s3 .secret.key=minioadmin
+          s3.secret.key=minioadmin
           s3.region=us-east-1
           s3.bucket=parseable
   k8sConfigGroup:
   - name: k8s-server
-    spec:
-      volumes:
-      - name: pvctest
-        persistentVolumeClaim:
-          claimName: pvctest
-      containers:
-      - command:
-          - sleep
-          - "3600"
-        image: praqma/network-multitool
-        name: debug-network-container
-        volumeMounts:
-        # a mount for site-data
-        - name: pvctest
-          mountPath: /data
+    image: parseable/parseable:v0.3.0
     storageConfig:
-    - name: pvctest
+    - name: stage-volume
+      mountPath: "/parseable/staging"
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        storageClassName: "civo-volume"
+        resources:
+          requests:
+            storage: 10Gi
+    - name: data-volume
+      mountPath: "/parseable/data"
       spec:
         accessModes:
         - ReadWriteOnce

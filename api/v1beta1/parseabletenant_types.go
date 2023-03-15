@@ -49,15 +49,27 @@ type ObjectStoreConfig struct {
 }
 
 type K8sConfigGroupSpec struct {
-	Name          string          `json:"name"`
-	Volumes       []v1.Volume     `json:"volumes,omitempty"`
-	Spec          v1.PodSpec      `json:"spec"`
-	StorageConfig []StorageConfig `json:"storageConfig"`
+	Name               string            `json:"name"`
+	Volumes            []v1.Volume       `json:"volumes,omitempty"`
+	VolumeMount        []v1.VolumeMount  `json:"volumeMount,omitempty"`
+	Image              string            `json:"image"`
+	ImagePullPolicy    v1.PullPolicy     `json:"imagePullPolicy,omitempty"`
+	ServiceAccountName string            `json:"serviceAccountName,omitempty"`
+	Tolerations        []v1.Toleration   `json:"tolerations,omitempty"`
+	PodMetadata        Metadata          `json:"podMetadata,omitempty"`
+	StorageConfig      []StorageConfig   `json:"storageConfig"`
+	NodeSelector       map[string]string `json:"nodeSelector,omitempty"`
+}
+
+type Metadata struct {
+	Annotations map[string]string `json:"annotations,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
 }
 
 type StorageConfig struct {
-	Name    string                       `json:"name"`
-	PvcSpec v1.PersistentVolumeClaimSpec `json:"spec"`
+	Name      string                       `json:"name"`
+	MountPath string                       `json:"mountPath"`
+	PvcSpec   v1.PersistentVolumeClaimSpec `json:"spec"`
 }
 
 type ParseableConfigGroupSpec struct {
