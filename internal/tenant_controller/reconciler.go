@@ -122,6 +122,11 @@ func makeStsOrDeploy(
 	client client.Client,
 	ownerRef *metav1.OwnerReference) *builder.BuilderDeploymentStatefulSet {
 
+	var args = []string{"parseable"}
+
+	for _, arg := range ptNode.CliArgs {
+		args = append(args, arg)
+	}
 	podSpec := v1.PodSpec{
 		NodeSelector: k8sConfigGroup.NodeSelector,
 		Tolerations:  getTolerations(k8sConfigGroup),
@@ -129,6 +134,7 @@ func makeStsOrDeploy(
 			{
 				Name:            ptNode.NodeType,
 				Image:           k8sConfigGroup.Image,
+				Args:            args,
 				ImagePullPolicy: k8sConfigGroup.ImagePullPolicy,
 				Ports: []v1.ContainerPort{
 					{
@@ -137,18 +143,9 @@ func makeStsOrDeploy(
 				},
 				EnvFrom: []v1.EnvFromSource{
 					{
-						Prefix: "P_",
 						ConfigMapRef: &v1.ConfigMapEnvSource{
 							LocalObjectReference: v1.LocalObjectReference{
 								Name: parseableConfigGroup.Name,
-							},
-						},
-					},
-					{
-						Prefix: "P_",
-						ConfigMapRef: &v1.ConfigMapEnvSource{
-							LocalObjectReference: v1.LocalObjectReference{
-								Name: pt.GetName() + "-external",
 							},
 						},
 					},
@@ -219,7 +216,6 @@ func getVolumeMounts(k8sConfig *v1beta1.K8sConfigGroupSpec, storageConfig *[]v1b
 		volumeMount = append(volumeMount, v1.VolumeMount{
 			MountPath: sc.MountPath,
 			Name:      sc.Name,
-			ReadOnly:  true,
 		})
 	}
 

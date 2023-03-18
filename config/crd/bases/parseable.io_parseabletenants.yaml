@@ -2074,6 +2074,10 @@ spec:
               nodes:
                 items:
                   properties:
+                    cliArgs:
+                      items:
+                        type: string
+                      type: array
                     k8sConfigGroup:
                       type: string
                     kind:
@@ -2087,6 +2091,7 @@ spec:
                     replicas:
                       type: integer
                   required:
+                  - cliArgs
                   - k8sConfigGroup
                   - kind
                   - name
@@ -2109,7 +2114,6 @@ spec:
                 type: array
             required:
             - deploymentOrder
-            - external
             - k8sConfigGroup
             - nodes
             - parseableConfigGroup

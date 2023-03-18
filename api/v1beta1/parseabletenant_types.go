@@ -29,7 +29,7 @@ import (
 // ParseableTenantSpec defines the desired state of ParseableTenant
 type ParseableTenantSpec struct {
 	DeploymentOrder      []string                   `json:"deploymentOrder"`
-	External             ExternalSpec               `json:"external"`
+	External             ExternalSpec               `json:"external,omitempty"`
 	K8sConfigGroup       []K8sConfigGroupSpec       `json:"k8sConfigGroup"`
 	ParseableConfigGroup []ParseableConfigGroupSpec `json:"parseableConfigGroup"`
 	Nodes                []NodeSpec                 `json:"nodes"`
@@ -78,12 +78,13 @@ type ParseableConfigGroupSpec struct {
 }
 
 type NodeSpec struct {
-	Name                 string `json:"name"`
-	Kind                 string `json:"kind"`
-	NodeType             string `json:"nodeType"`
-	Replicas             int    `json:"replicas"`
-	K8sConfigGroup       string `json:"k8sConfigGroup"`
-	ParseableConfigGroup string `json:"parseableConfigGroup"`
+	Name                 string   `json:"name"`
+	Kind                 string   `json:"kind"`
+	NodeType             string   `json:"nodeType"`
+	Replicas             int      `json:"replicas"`
+	K8sConfigGroup       string   `json:"k8sConfigGroup"`
+	CliArgs              []string `json:"cliArgs"`
+	ParseableConfigGroup string   `json:"parseableConfigGroup"`
 }
 
 // ParseableTenantStatus defines the observed state of ParseableTenant

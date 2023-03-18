@@ -8,20 +8,12 @@ spec:
       kind: Deployment
       replicas: 1
       nodeType: server
+      cliArgs: 
+      - local-store
       k8sConfigGroup: k8s-server
       parseableConfigGroup: server-config
   deploymentOrder:
   - server
-  external:
-    objectStore:
-      spec:
-        type: s3
-        data: |-
-          s3.url=http://minio.minio.svc.cluster.local:9000
-          s3.access.key=minioadmin
-          s3.secret.key=minioadmin
-          s3.region=us-east-1
-          s3.bucket=parseable
   k8sConfigGroup:
   - name: k8s-server
     image: parseable/parseable:v0.3.0
@@ -47,8 +39,8 @@ spec:
   parseableConfigGroup:
   - name: server-config
     data: |-
-      addr=0.0.0.0:8000 
-      staging.dir=./staging
-      fs.dir=./data
-      username=admin
-      password=admin
+      P_ADDR=0.0.0.0:8000 
+      P_STAGING_DIR.dir=./staging
+      P_FS_DIR=./data
+      P_USERNAME=admin
+      P_PASSWORD=admin
