@@ -43,7 +43,9 @@ func reconcileParseable(client client.Client, pt *v1beta1.ParseableTenant) error
 		}
 	}
 
-	parseableConfigMap = append(parseableConfigMap, *makeExternalConfigMap(pt, client, getOwnerRef))
+	if pt.Spec.External != (v1beta1.ExternalSpec{}) {
+		parseableConfigMap = append(parseableConfigMap, *makeExternalConfigMap(pt, client, getOwnerRef))
+	}
 
 	builder := builder.NewBuilder(
 		builder.ToNewConfigMapBuilder(parseableConfigMap),
@@ -127,15 +129,44 @@ func makeStsOrDeploy(
 	for _, arg := range ptNode.CliArgs {
 		args = append(args, arg)
 	}
+
+	b := false
+
+	var envFrom []v1.EnvFromSource
+	configCm := v1.EnvFromSource{
+		ConfigMapRef: &v1.ConfigMapEnvSource{
+			LocalObjectReference: v1.LocalObjectReference{
+				Name: parseableConfigGroup.Name,
+			},
+		},
+	}
+	envFrom = append(envFrom, configCm)
+
+	if pt.Spec.External != (v1beta1.ExternalSpec{}) {
+		externalCm := v1.EnvFromSource{
+			ConfigMapRef: &v1.ConfigMapEnvSource{
+				LocalObjectReference: v1.LocalObjectReference{
+					Name: pt.Name + "external-cm",
+				},
+			},
+		}
+		envFrom = append(envFrom, externalCm)
+
+	}
+
 	podSpec := v1.PodSpec{
 		NodeSelector: k8sConfigGroup.NodeSelector,
 		Tolerations:  getTolerations(k8sConfigGroup),
 		Containers: []v1.Container{
+
 			{
 				Name:            ptNode.NodeType,
 				Image:           k8sConfigGroup.Image,
 				Args:            args,
 				ImagePullPolicy: k8sConfigGroup.ImagePullPolicy,
+				SecurityContext: &v1.SecurityContext{
+					AllowPrivilegeEscalation: &b,
+				},
 				Ports: []v1.ContainerPort{
 					{
 						ContainerPort: 8000,

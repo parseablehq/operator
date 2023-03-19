@@ -57,7 +57,7 @@ type K8sConfigGroupSpec struct {
 	ServiceAccountName string            `json:"serviceAccountName,omitempty"`
 	Tolerations        []v1.Toleration   `json:"tolerations,omitempty"`
 	PodMetadata        Metadata          `json:"podMetadata,omitempty"`
-	StorageConfig      []StorageConfig   `json:"storageConfig"`
+	StorageConfig      []StorageConfig   `json:"storageConfig,omitempty"`
 	NodeSelector       map[string]string `json:"nodeSelector,omitempty"`
 }
 

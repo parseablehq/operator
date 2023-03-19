@@ -2068,7 +2068,6 @@ spec:
                   required:
                   - image
                   - name
-                  - storageConfig
                   type: object
                 type: array
               nodes:
