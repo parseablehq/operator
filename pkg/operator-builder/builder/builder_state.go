@@ -1,4 +1,4 @@
-package parseabletenantcontroller
+package builder
 
 import (
 	"context"

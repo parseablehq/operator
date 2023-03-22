@@ -91,10 +91,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&parseabletenantcontroller.ParseableTenantReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	if err = (parseabletenantcontroller.NewParseableTenantReconciler(mgr)).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ParseableTenant")
 		os.Exit(1)
 	}
