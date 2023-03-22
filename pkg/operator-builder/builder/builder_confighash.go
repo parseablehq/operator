@@ -1,4 +1,4 @@
-package parseabletenantcontroller
+package builder
 
 import (
 	"sigs.k8s.io/controller-runtime/pkg/client"

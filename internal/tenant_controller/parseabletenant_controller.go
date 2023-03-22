@@ -30,12 +30,22 @@ import (
 
 	"github.com/parseablehq/parseable-operator/api/v1beta1"
 	parseableiov1beta1 "github.com/parseablehq/parseable-operator/api/v1beta1"
+	"github.com/parseablehq/parseable-operator/pkg/operator-builder/reconciler"
 )
 
 // ParseableTenantReconciler reconciles a ParseableTenant object
 type ParseableTenantReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	reconciler.CustomResourceReconciler
+}
+
+func NewParseableTenantReconciler(mgr ctrl.Manager) *ParseableTenantReconciler {
+	return &ParseableTenantReconciler{
+		Client:                   mgr.GetClient(),
+		Scheme:                   mgr.GetScheme(),
+		CustomResourceReconciler: *reconciler.NewCustomResourceReconciler(mgr, "ParseableTenant"),
+	}
 }
 
 //+kubebuilder:rbac:groups=parseable.io,resources=parseabletenants,verbs=get;list;watch;create;update;patch;delete

@@ -7,7 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/parseablehq/parseable-operator/api/v1beta1"
-	builder "github.com/parseablehq/parseable-operator/pkg/operator-builder"
+	"github.com/parseablehq/parseable-operator/pkg/operator-builder/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -24,10 +24,15 @@ func reconcileParseable(client client.Client, pt *v1beta1.ParseableTenant) error
 	nodeSpecs := getAllNodeSpecForNodeType(pt)
 
 	parseableConfigMap := []builder.BuilderConfigMap{}
+	parseableConfigMapHash := []builder.BuilderConfigMapHash{}
 	parseableDeploymentOrStatefulset := []builder.BuilderDeploymentStatefulSet{}
 	parseableStorage := []builder.BuilderStorageConfig{}
-	parseableConfigMapHash := []builder.BuilderConfigMapHash{}
 
+	// For all the nodeSpec ie nodeType to nodeSpec
+	// Get all the config group defined and append to configMap builder
+	// For each config group defined create a configmap hash and append to configmaphash builder
+	// Get all the k8s config group defined and append to deploymentstatefulset builder
+	// For all the storage config defined in k8s config group append
 	for _, nodeSpec := range nodeSpecs {
 		for _, parseableConfig := range pt.Spec.ParseableConfigGroup {
 			if nodeSpec.NodeSpec.ParseableConfigGroup == parseableConfig.Name {
@@ -46,6 +51,7 @@ func reconcileParseable(client client.Client, pt *v1beta1.ParseableTenant) error
 		}
 	}
 
+	// append external config and hash to configmap builder
 	if pt.Spec.External != (v1beta1.ExternalSpec{}) {
 		cm := *makeExternalConfigMap(pt, client, getOwnerRef)
 		parseableConfigMap = append(parseableConfigMap, cm)
@@ -53,6 +59,7 @@ func reconcileParseable(client client.Client, pt *v1beta1.ParseableTenant) error
 
 	}
 
+	// construct builder
 	builder := builder.NewBuilder(
 		builder.ToNewConfigMapBuilder(parseableConfigMap),
 		builder.ToNewConfigMapHashBuilder(parseableConfigMapHash),
@@ -60,6 +67,10 @@ func reconcileParseable(client client.Client, pt *v1beta1.ParseableTenant) error
 		builder.ToNewBuilderStorageConfig(parseableStorage),
 	)
 
+	// All builder methods called are responsible for reconciling
+	// and triggering reconcilers in case of state change.
+
+	// build configmap
 	resultCm, err := builder.BuildConfigMap()
 	if err != nil {
 		return err
@@ -67,16 +78,20 @@ func reconcileParseable(client client.Client, pt *v1beta1.ParseableTenant) error
 
 	fmt.Printf("Cm %s", resultCm)
 
+	// build configmap hash
 	cmhashes, err := builder.BuildConfigMapHash()
 	if err != nil {
 		return err
 	}
+
+	// build depoyment or statefulset
 	resultDeploy, err := builder.BuildDeployOrSts(cmhashes)
 	if err != nil {
 		return err
 	}
 	fmt.Printf("Deploy %s", resultDeploy)
 
+	// build storage
 	resultPvc, err := builder.BuildPvc()
 	if err != nil {
 		return err
