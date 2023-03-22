@@ -55,6 +55,7 @@ type K8sConfigGroupSpec struct {
 	Image              string            `json:"image"`
 	ImagePullPolicy    v1.PullPolicy     `json:"imagePullPolicy,omitempty"`
 	ServiceAccountName string            `json:"serviceAccountName,omitempty"`
+	Env                []v1.EnvVar       `json:"env,omitempty"`
 	Tolerations        []v1.Toleration   `json:"tolerations,omitempty"`
 	PodMetadata        Metadata          `json:"podMetadata,omitempty"`
 	StorageConfig      []StorageConfig   `json:"storageConfig,omitempty"`

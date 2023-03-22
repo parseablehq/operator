@@ -23,14 +23,17 @@ func reconcileParseable(client client.Client, pt *v1beta1.ParseableTenant) error
 
 	nodeSpecs := getAllNodeSpecForNodeType(pt)
 
-	var parseableConfigMap []builder.BuilderConfigMap
-	var parseableDeploymentOrStatefulset []builder.BuilderDeploymentStatefulSet
-	var parseableStorage []builder.BuilderStorageConfig
+	parseableConfigMap := []builder.BuilderConfigMap{}
+	parseableDeploymentOrStatefulset := []builder.BuilderDeploymentStatefulSet{}
+	parseableStorage := []builder.BuilderStorageConfig{}
+	parseableConfigMapHash := []builder.BuilderConfigMapHash{}
 
 	for _, nodeSpec := range nodeSpecs {
 		for _, parseableConfig := range pt.Spec.ParseableConfigGroup {
 			if nodeSpec.NodeSpec.ParseableConfigGroup == parseableConfig.Name {
-				parseableConfigMap = append(parseableConfigMap, *makeParseableConfigMap(pt, &parseableConfig, client, getOwnerRef))
+				cm := *makeParseableConfigMap(pt, &parseableConfig, client, getOwnerRef)
+				parseableConfigMap = append(parseableConfigMap, cm)
+				parseableConfigMapHash = append(parseableConfigMapHash, builder.BuilderConfigMapHash{Object: &v1.ConfigMap{Data: cm.Data, ObjectMeta: cm.ObjectMeta}})
 				for _, k8sConfig := range pt.Spec.K8sConfigGroup {
 					if nodeSpec.NodeSpec.K8sConfigGroup == k8sConfig.Name {
 						parseableDeploymentOrStatefulset = append(parseableDeploymentOrStatefulset, *makeStsOrDeploy(pt, &nodeSpec.NodeSpec, &k8sConfig, &k8sConfig.StorageConfig, &parseableConfig, client, getOwnerRef))
@@ -44,11 +47,15 @@ func reconcileParseable(client client.Client, pt *v1beta1.ParseableTenant) error
 	}
 
 	if pt.Spec.External != (v1beta1.ExternalSpec{}) {
-		parseableConfigMap = append(parseableConfigMap, *makeExternalConfigMap(pt, client, getOwnerRef))
+		cm := *makeExternalConfigMap(pt, client, getOwnerRef)
+		parseableConfigMap = append(parseableConfigMap, cm)
+		parseableConfigMapHash = append(parseableConfigMapHash, builder.BuilderConfigMapHash{Object: cm.DesiredState})
+
 	}
 
 	builder := builder.NewBuilder(
 		builder.ToNewConfigMapBuilder(parseableConfigMap),
+		builder.ToNewConfigMapHashBuilder(parseableConfigMapHash),
 		builder.ToNewDeploymentStatefulSetBuilder(parseableDeploymentOrStatefulset),
 		builder.ToNewBuilderStorageConfig(parseableStorage),
 	)
@@ -60,7 +67,11 @@ func reconcileParseable(client client.Client, pt *v1beta1.ParseableTenant) error
 
 	fmt.Printf("Cm %s", resultCm)
 
-	resultDeploy, err := builder.BuildDeployOrSts()
+	cmhashes, err := builder.BuildConfigMapHash()
+	if err != nil {
+		return err
+	}
+	resultDeploy, err := builder.BuildDeployOrSts(cmhashes)
 	if err != nil {
 		return err
 	}
@@ -172,6 +183,7 @@ func makeStsOrDeploy(
 						ContainerPort: 8000,
 					},
 				},
+				Env: getEnv(*k8sConfigGroup),
 				EnvFrom: []v1.EnvFromSource{
 					{
 						ConfigMapRef: &v1.ConfigMapEnvSource{
@@ -269,4 +281,14 @@ func getVolume(k8sConfig *v1beta1.K8sConfigGroupSpec, storageConfig *[]v1beta1.S
 
 	volumeHolder = append(volumeHolder, k8sConfig.Volumes...)
 	return volumeHolder
+}
+
+func getEnv(k8sConfigGroup v1beta1.K8sConfigGroupSpec) []v1.EnvVar {
+	var envHolder []v1.EnvVar
+
+	for _, env := range k8sConfigGroup.Env {
+		envHolder = append(envHolder, env)
+	}
+
+	return envHolder
 }

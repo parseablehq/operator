@@ -1,8 +1,6 @@
 package parseabletenantcontroller
 
 import (
-	"fmt"
-
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +21,16 @@ func ToNewDeploymentStatefulSetBuilder(builder []BuilderDeploymentStatefulSet) f
 	}
 }
 
-func (b BuilderDeploymentStatefulSet) MakeDeployment() (*appsv1.Deployment, error) {
+func (b BuilderDeploymentStatefulSet) MakeDeployment(cmhashes []HashHolder) (*appsv1.Deployment, error) {
+
+	var podSpec v1.PodSpec
+
+	podSpec = *b.PodSpec
+
+	for i, cmhash := range cmhashes {
+		podSpec.Containers[i].Env = append(podSpec.Containers[i].Env, v1.EnvVar{Name: cmhash.Name, Value: cmhash.HashVaule})
+	}
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -40,13 +47,21 @@ func (b BuilderDeploymentStatefulSet) MakeDeployment() (*appsv1.Deployment, erro
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: b.Labels,
 				},
-				Spec: *b.PodSpec,
+				Spec: podSpec,
 			},
 		},
 	}, nil
 }
 
-func (b BuilderDeploymentStatefulSet) MakeStatefulSet() (*appsv1.StatefulSet, error) {
+func (b BuilderDeploymentStatefulSet) MakeStatefulSet(cmhashes []HashHolder) (*appsv1.StatefulSet, error) {
+	var podSpec v1.PodSpec
+
+	podSpec = *b.PodSpec
+
+	for i, cmhash := range cmhashes {
+		podSpec.Containers[i].Env = append(podSpec.Containers[i].Env, v1.EnvVar{Name: cmhash.Name, Value: cmhash.HashVaule})
+	}
+
 	return &appsv1.StatefulSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -65,28 +80,28 @@ func (b BuilderDeploymentStatefulSet) MakeStatefulSet() (*appsv1.StatefulSet, er
 	}, nil
 }
 
-func (s *Builder) BuildDeployOrSts() (controllerutil.OperationResult, error) {
+func (s *Builder) BuildDeployOrSts(cmHashes []HashHolder) (controllerutil.OperationResult, error) {
+
 	for _, deployorsts := range s.DeploymentOrStatefulset {
-		fmt.Println(deployorsts)
 		if deployorsts.Kind == "Deployment" {
-			_, err := s.BuildDeployment()
+			_, err := s.BuildDeployment(cmHashes)
 			if err != nil {
-				fmt.Println(err)
+				return controllerutil.OperationResultNone, err
 			}
 		} else if deployorsts.Kind == "Statefulset" {
-			_, err := s.BuildStatefulset()
+			_, err := s.BuildStatefulset(cmHashes)
 			if err != nil {
-				fmt.Println(err)
+				return controllerutil.OperationResultNone, err
 			}
 		}
 	}
 	return controllerutil.OperationResultNone, nil
 }
 
-func (s *Builder) BuildDeployment() (controllerutil.OperationResult, error) {
+func (s *Builder) BuildDeployment(cmhashes []HashHolder) (controllerutil.OperationResult, error) {
 
 	for _, deploy := range s.DeploymentOrStatefulset {
-		deployment, err := deploy.MakeDeployment()
+		deployment, err := deploy.MakeDeployment(cmhashes)
 		if err != nil {
 			return controllerutil.OperationResultNone, err
 		}
@@ -96,20 +111,17 @@ func (s *Builder) BuildDeployment() (controllerutil.OperationResult, error) {
 
 		_, err = deploy.CreateOrUpdate()
 		if err != nil {
-			fmt.Println(err)
-
 			return controllerutil.OperationResultNone, err
 		}
 	}
 	return controllerutil.OperationResultNone, nil
 }
 
-func (s *Builder) BuildStatefulset() (controllerutil.OperationResult, error) {
+func (s *Builder) BuildStatefulset(cmhashes []HashHolder) (controllerutil.OperationResult, error) {
 
 	for _, statefulset := range s.DeploymentOrStatefulset {
-		sts, err := statefulset.MakeStatefulSet()
+		sts, err := statefulset.MakeStatefulSet(cmhashes)
 		if err != nil {
-			fmt.Println(err)
 			return controllerutil.OperationResultNone, err
 		}
 
@@ -118,8 +130,6 @@ func (s *Builder) BuildStatefulset() (controllerutil.OperationResult, error) {
 
 		_, err = statefulset.CreateOrUpdate()
 		if err != nil {
-			fmt.Println(err)
-
 			return controllerutil.OperationResultNone, err
 		}
 	}
