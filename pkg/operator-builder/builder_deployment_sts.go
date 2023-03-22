@@ -1,8 +1,6 @@
 package parseabletenantcontroller
 
 import (
-	"fmt"
-
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -88,12 +86,12 @@ func (s *Builder) BuildDeployOrSts(cmHashes []HashHolder) (controllerutil.Operat
 		if deployorsts.Kind == "Deployment" {
 			_, err := s.BuildDeployment(cmHashes)
 			if err != nil {
-				fmt.Println(err)
+				return controllerutil.OperationResultNone, err
 			}
 		} else if deployorsts.Kind == "Statefulset" {
 			_, err := s.BuildStatefulset(cmHashes)
 			if err != nil {
-				fmt.Println(err)
+				return controllerutil.OperationResultNone, err
 			}
 		}
 	}
