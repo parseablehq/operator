@@ -1,17 +1,19 @@
 package parseabletenantcontroller
 
 import (
+	"context"
 	"fmt"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/go-logr/logr"
 	"github.com/parseablehq/parseable-operator/api/v1beta1"
 	"github.com/parseablehq/parseable-operator/pkg/operator-builder/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func reconcileParseable(client client.Client, pt *v1beta1.ParseableTenant) error {
+func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.ParseableTenant, log logr.Logger) error {
 
 	// create ownerRef passed to each object created
 	getOwnerRef := makeOwnerRef(
@@ -36,14 +38,14 @@ func reconcileParseable(client client.Client, pt *v1beta1.ParseableTenant) error
 	for _, nodeSpec := range nodeSpecs {
 		for _, parseableConfig := range pt.Spec.ParseableConfigGroup {
 			if nodeSpec.NodeSpec.ParseableConfigGroup == parseableConfig.Name {
-				cm := *makeParseableConfigMap(pt, &parseableConfig, client, getOwnerRef)
+				cm := *makeParseableConfigMap(pt, &parseableConfig, r.Client, getOwnerRef)
 				parseableConfigMap = append(parseableConfigMap, cm)
 				parseableConfigMapHash = append(parseableConfigMapHash, builder.BuilderConfigMapHash{Object: &v1.ConfigMap{Data: cm.Data, ObjectMeta: cm.ObjectMeta}})
 				for _, k8sConfig := range pt.Spec.K8sConfigGroup {
 					if nodeSpec.NodeSpec.K8sConfigGroup == k8sConfig.Name {
-						parseableDeploymentOrStatefulset = append(parseableDeploymentOrStatefulset, *makeStsOrDeploy(pt, &nodeSpec.NodeSpec, &k8sConfig, &k8sConfig.StorageConfig, &parseableConfig, client, getOwnerRef))
+						parseableDeploymentOrStatefulset = append(parseableDeploymentOrStatefulset, *makeStsOrDeploy(pt, &nodeSpec.NodeSpec, &k8sConfig, &k8sConfig.StorageConfig, &parseableConfig, r.Client, getOwnerRef))
 						for _, sc := range k8sConfig.StorageConfig {
-							parseableStorage = append(parseableStorage, *makePvc(pt, client, getOwnerRef, &sc))
+							parseableStorage = append(parseableStorage, *makePvc(pt, r.Client, getOwnerRef, &sc))
 						}
 					}
 				}
@@ -53,30 +55,29 @@ func reconcileParseable(client client.Client, pt *v1beta1.ParseableTenant) error
 
 	// append external config and hash to configmap builder
 	if pt.Spec.External != (v1beta1.ExternalSpec{}) {
-		cm := *makeExternalConfigMap(pt, client, getOwnerRef)
+		cm := *makeExternalConfigMap(pt, r.Client, getOwnerRef)
 		parseableConfigMap = append(parseableConfigMap, cm)
 		parseableConfigMapHash = append(parseableConfigMapHash, builder.BuilderConfigMapHash{Object: cm.DesiredState})
-
 	}
 
 	// construct builder
 	builder := builder.NewBuilder(
-		builder.ToNewConfigMapBuilder(parseableConfigMap),
-		builder.ToNewConfigMapHashBuilder(parseableConfigMapHash),
-		builder.ToNewDeploymentStatefulSetBuilder(parseableDeploymentOrStatefulset),
+		builder.ToNewBuilderConfigMap(parseableConfigMap),
+		builder.ToNewBuilderConfigMapHash(parseableConfigMapHash),
+		builder.ToNewBuilderDeploymentStatefulSet(parseableDeploymentOrStatefulset),
 		builder.ToNewBuilderStorageConfig(parseableStorage),
+		builder.ToNewBuilderRecorder(builder.BuilderRecorder{Recorder: r.Recorder, ControllerName: "ParseableOperator"}),
+		builder.ToNewBuilderContext(builder.BuilderContext{Context: ctx}),
 	)
 
 	// All builder methods called are responsible for reconciling
 	// and triggering reconcilers in case of state change.
 
 	// build configmap
-	resultCm, err := builder.BuildConfigMap()
+	_, err := builder.BuildConfigMap()
 	if err != nil {
 		return err
 	}
-
-	fmt.Printf("Cm %s", resultCm)
 
 	// build configmap hash
 	cmhashes, err := builder.BuildConfigMapHash()
@@ -85,18 +86,16 @@ func reconcileParseable(client client.Client, pt *v1beta1.ParseableTenant) error
 	}
 
 	// build depoyment or statefulset
-	resultDeploy, err := builder.BuildDeployOrSts(cmhashes)
+	_, err = builder.BuildDeployOrSts(cmhashes)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Deploy %s", resultDeploy)
 
 	// build storage
-	resultPvc, err := builder.BuildPvc()
+	_, err = builder.BuildPvc()
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Pvc %s", resultPvc)
 
 	return nil
 }
@@ -179,10 +178,18 @@ func makeStsOrDeploy(
 		envFrom = append(envFrom, externalCm)
 
 	}
+	var runner int64 = 1000
+	fsPolicy := v1.FSGroupChangeAlways
 
 	podSpec := v1.PodSpec{
 		NodeSelector: k8sConfigGroup.NodeSelector,
 		Tolerations:  getTolerations(k8sConfigGroup),
+		SecurityContext: &v1.PodSecurityContext{
+			RunAsUser:           &runner,
+			RunAsGroup:          &runner,
+			FSGroup:             &runner,
+			FSGroupChangePolicy: &fsPolicy,
+		},
 		Containers: []v1.Container{
 
 			{
