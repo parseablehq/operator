@@ -29,6 +29,7 @@ type NodeTypeNodeSpec struct {
 // constructor to nodeTypeNodeSpec. Order is constructed based on the deployment Order
 func getAllNodeSpecForNodeType(pt *v1beta1.ParseableTenant) []NodeTypeNodeSpec {
 
+	// add more nodes types
 	nodeSpecsByNodeType := map[string][]NodeTypeNodeSpec{
 		pt.Spec.DeploymentOrder[0]: make([]NodeTypeNodeSpec, 0, 1),
 	}

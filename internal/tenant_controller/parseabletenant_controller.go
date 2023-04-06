@@ -20,31 +20,39 @@ package parseabletenantcontroller
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/go-logr/logr"
 	"github.com/parseablehq/parseable-operator/api/v1beta1"
 	parseableiov1beta1 "github.com/parseablehq/parseable-operator/api/v1beta1"
-	"github.com/parseablehq/parseable-operator/pkg/operator-builder/reconciler"
 )
 
 // ParseableTenantReconciler reconciles a ParseableTenant object
 type ParseableTenantReconciler struct {
 	client.Client
+	Log    logr.Logger
 	Scheme *runtime.Scheme
-	reconciler.CustomResourceReconciler
+	// reconcile time duration, defaults to 10s
+	ReconcileWait time.Duration
+	Recorder      record.EventRecorder
 }
 
 func NewParseableTenantReconciler(mgr ctrl.Manager) *ParseableTenantReconciler {
+	initLogger := ctrl.Log.WithName("controllers").WithName("parseable-tenant")
 	return &ParseableTenantReconciler{
-		Client:                   mgr.GetClient(),
-		Scheme:                   mgr.GetScheme(),
-		CustomResourceReconciler: *reconciler.NewCustomResourceReconciler(mgr, "ParseableTenant"),
+		Client:        mgr.GetClient(),
+		Log:           initLogger,
+		Scheme:        mgr.GetScheme(),
+		ReconcileWait: LookupReconcileTime(initLogger),
+		Recorder:      mgr.GetEventRecorderFor("druid-operator"),
 	}
 }
 
@@ -53,7 +61,7 @@ func NewParseableTenantReconciler(mgr ctrl.Manager) *ParseableTenantReconciler {
 //+kubebuilder:rbac:groups=parseable.io,resources=parseabletenants/finalizers,verbs=update
 
 func (r *ParseableTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logr := log.FromContext(ctx)
 
 	parseableCR := &v1beta1.ParseableTenant{}
 	err := r.Get(context.TODO(), req.NamespacedName, parseableCR)
@@ -64,7 +72,8 @@ func (r *ParseableTenantReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, err
 	}
 
-	if err := reconcileParseable(r.Client, parseableCR); err != nil {
+	if err := r.do(ctx, parseableCR, logr); err != nil {
+		logr.Error(err, err.Error())
 		return ctrl.Result{}, err
 	} else {
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
@@ -76,4 +85,19 @@ func (r *ParseableTenantReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&parseableiov1beta1.ParseableTenant{}).
 		Complete(r)
+}
+
+func LookupReconcileTime(log logr.Logger) time.Duration {
+	val, exists := os.LookupEnv("RECONCILE_WAIT")
+	if !exists {
+		return time.Second * 10
+	} else {
+		v, err := time.ParseDuration(val)
+		if err != nil {
+			log.Error(err, err.Error())
+			// Exit Program if not valid
+			os.Exit(1)
+		}
+		return v
+	}
 }
