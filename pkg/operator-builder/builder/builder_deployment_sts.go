@@ -21,7 +21,25 @@ func ToNewBuilderDeploymentStatefulSet(builder []BuilderDeploymentStatefulSet) f
 	}
 }
 
-func (b BuilderDeploymentStatefulSet) MakeDeployment(cmhashes []HashHolder) (*appsv1.Deployment, error) {
+func (s *Builder) ReconcileDeployOrSts(cmHashes []HashHolder) (controllerutil.OperationResult, error) {
+
+	for _, deployorsts := range s.DeploymentOrStatefulset {
+		if deployorsts.Kind == "Deployment" {
+			_, err := s.buildDeployment(cmHashes)
+			if err != nil {
+				return controllerutil.OperationResultNone, err
+			}
+		} else if deployorsts.Kind == "Statefulset" {
+			_, err := s.buildStatefulset(cmHashes)
+			if err != nil {
+				return controllerutil.OperationResultNone, err
+			}
+		}
+	}
+	return controllerutil.OperationResultNone, nil
+}
+
+func (b BuilderDeploymentStatefulSet) makeDeployment(cmhashes []HashHolder) (*appsv1.Deployment, error) {
 
 	var podSpec v1.PodSpec
 
@@ -80,28 +98,10 @@ func (b BuilderDeploymentStatefulSet) MakeStatefulSet(cmhashes []HashHolder) (*a
 	}, nil
 }
 
-func (s *Builder) BuildDeployOrSts(cmHashes []HashHolder) (controllerutil.OperationResult, error) {
-
-	for _, deployorsts := range s.DeploymentOrStatefulset {
-		if deployorsts.Kind == "Deployment" {
-			_, err := s.BuildDeployment(cmHashes)
-			if err != nil {
-				return controllerutil.OperationResultNone, err
-			}
-		} else if deployorsts.Kind == "Statefulset" {
-			_, err := s.BuildStatefulset(cmHashes)
-			if err != nil {
-				return controllerutil.OperationResultNone, err
-			}
-		}
-	}
-	return controllerutil.OperationResultNone, nil
-}
-
-func (s *Builder) BuildDeployment(cmhashes []HashHolder) (controllerutil.OperationResult, error) {
+func (s *Builder) buildDeployment(cmhashes []HashHolder) (controllerutil.OperationResult, error) {
 
 	for _, deploy := range s.DeploymentOrStatefulset {
-		deployment, err := deploy.MakeDeployment(cmhashes)
+		deployment, err := deploy.makeDeployment(cmhashes)
 		if err != nil {
 			return controllerutil.OperationResultNone, err
 		}
@@ -117,7 +117,7 @@ func (s *Builder) BuildDeployment(cmhashes []HashHolder) (controllerutil.Operati
 	return controllerutil.OperationResultNone, nil
 }
 
-func (s *Builder) BuildStatefulset(cmhashes []HashHolder) (controllerutil.OperationResult, error) {
+func (s *Builder) buildStatefulset(cmhashes []HashHolder) (controllerutil.OperationResult, error) {
 
 	for _, statefulset := range s.DeploymentOrStatefulset {
 		sts, err := statefulset.MakeStatefulSet(cmhashes)
