@@ -75,31 +75,31 @@ func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.Parseabl
 	// and triggering reconcilers in case of state change.
 
 	// build configmap
-	_, err := builder.BuildConfigMap()
+	_, err := builder.ReconcileConfigMap()
 	if err != nil {
 		return err
 	}
 
 	// build configmap hash
-	cmhashes, err := builder.BuildConfigMapHash()
+	cmhashes, err := builder.ReconcileConfigMapHash()
 	if err != nil {
 		return err
 	}
 
 	// builder svc
-	_, err = builder.BuildService()
+	_, err = builder.ReconcileService()
 	if err != nil {
 		return err
 	}
 
 	// build depoyment or statefulset
-	_, err = builder.BuildDeployOrSts(cmhashes)
+	_, err = builder.ReconcileDeployOrSts(cmhashes)
 	if err != nil {
 		return err
 	}
 
 	// build storage
-	_, err = builder.BuildPvc()
+	_, err = builder.ReconcileStorage()
 	if err != nil {
 		return err
 	}
