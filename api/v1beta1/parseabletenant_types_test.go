@@ -55,6 +55,7 @@ spec:
       toleration: {}
       affinity: {}
       labels: {}
+      service: {}
     storageConfig:
     - name: pvctest
       mountPath: "/var/lib"

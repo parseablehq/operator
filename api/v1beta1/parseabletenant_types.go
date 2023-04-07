@@ -60,6 +60,7 @@ type K8sConfigGroupSpec struct {
 	PodMetadata        Metadata          `json:"podMetadata,omitempty"`
 	StorageConfig      []StorageConfig   `json:"storageConfig,omitempty"`
 	NodeSelector       map[string]string `json:"nodeSelector,omitempty"`
+	Service            *v1.ServiceSpec   `json:"service,omitempty"`
 }
 
 type Metadata struct {
