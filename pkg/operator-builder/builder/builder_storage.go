@@ -21,12 +21,12 @@ func (s *Builder) ReconcileStorage() (controllerutil.OperationResult, error) {
 
 	for _, storage := range s.StorageConfig {
 
-		cm, err := storage.MakePvc()
+		pvc, err := storage.MakePvc()
 		if err != nil {
 			return controllerutil.OperationResultNone, err
 		}
 
-		storage.DesiredState = cm
+		storage.DesiredState = pvc
 		storage.CurrentState = &v1.PersistentVolumeClaim{}
 
 		_, err = storage.CreateOrUpdate(s.Context.Context, s.Recorder)

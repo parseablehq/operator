@@ -26,7 +26,7 @@ const (
 	createObjError errorMessage = "CreateObjectError"
 )
 
-func (b BuilderRecorder) createEvent(crObj client.Object, obj client.Object, err error) {
+func (b *BuilderRecorder) createEvent(crObj client.Object, obj client.Object, err error) {
 	if err != nil {
 		b.Recorder.Event(
 			crObj,
@@ -42,7 +42,7 @@ func (b BuilderRecorder) createEvent(crObj client.Object, obj client.Object, err
 	}
 }
 
-func (b BuilderRecorder) updateEvent(crObj client.Object, obj client.Object, err error) {
+func (b *BuilderRecorder) updateEvent(crObj client.Object, obj client.Object, err error) {
 	if err != nil {
 		b.Recorder.Event(
 			crObj,

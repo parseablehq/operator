@@ -204,6 +204,7 @@ func makeSelectorLabels(nodeType string) map[string]string {
 		"app":      "parseable",
 	}
 }
+
 func getTolerations(k8sConfig *v1beta1.K8sConfigGroupSpec) []v1.Toleration {
 	tolerations := []v1.Toleration{}
 

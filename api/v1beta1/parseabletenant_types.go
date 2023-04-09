@@ -80,13 +80,13 @@ type ParseableConfigGroupSpec struct {
 }
 
 type NodeSpec struct {
-	Name                 string   `json:"name"`
-	Kind                 string   `json:"kind"`
-	NodeType             string   `json:"nodeType"`
-	Replicas             int      `json:"replicas"`
-	K8sConfigGroup       string   `json:"k8sConfigGroup"`
-	CliArgs              []string `json:"cliArgs"`
-	ParseableConfigGroup string   `json:"parseableConfigGroup"`
+	Name                     string   `json:"name"`
+	Kind                     string   `json:"kind"`
+	NodeType                 string   `json:"nodeType"`
+	Replicas                 int      `json:"replicas"`
+	K8sConfigGroup           string   `json:"k8sConfigGroup"`
+	CliArgs                  []string `json:"cliArgs"`
+	ParseableConfigGroupName string   `json:"parseableConfigGroup"`
 }
 
 // ParseableTenantStatus defines the observed state of ParseableTenant

@@ -2,6 +2,7 @@ package parseabletenantcontroller
 
 import (
 	"context"
+	"fmt"
 
 	v1 "k8s.io/api/core/v1"
 
@@ -21,6 +22,7 @@ func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.Parseabl
 	)
 
 	ib := newInternalBuilder(pt, r.Client, getOwnerRef)
+
 	nodeSpecs := getAllNodeSpecForNodeType(pt)
 
 	parseableConfigMap := []builder.BuilderConfigMap{}
@@ -35,8 +37,10 @@ func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.Parseabl
 	// Get all the k8s config group defined and append to deploymentstatefulset builder
 	// For all the storage config defined in k8s config group append
 	for _, nodeSpec := range nodeSpecs {
+
 		for _, parseableConfig := range pt.Spec.ParseableConfigGroup {
-			if nodeSpec.NodeSpec.ParseableConfigGroup == parseableConfig.Name {
+
+			if nodeSpec.NodeSpec.ParseableConfigGroupName == parseableConfig.Name {
 				cm := *ib.makeParseableConfigMap(&parseableConfig)
 				parseableConfigMap = append(parseableConfigMap, cm)
 				parseableConfigMapHash = append(parseableConfigMapHash, builder.BuilderConfigMapHash{Object: &v1.ConfigMap{Data: cm.Data, ObjectMeta: cm.ObjectMeta}})
@@ -69,40 +73,42 @@ func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.Parseabl
 		builder.ToNewBuilderRecorder(builder.BuilderRecorder{Recorder: r.Recorder, ControllerName: "ParseableOperator"}),
 		builder.ToNewBuilderContext(builder.BuilderContext{Context: ctx}),
 		builder.ToNewBuilderService(parseableService),
+		builder.ToNewBuilderStore(*builder.NewStore()),
 	)
 
 	// All builder methods called are responsible for reconciling
 	// and triggering reconcilers in case of state change.
 
-	// build configmap
+	// reconcile configmap
 	_, err := builder.ReconcileConfigMap()
 	if err != nil {
 		return err
 	}
 
-	// build configmap hash
+	// reconcile configmap hash
 	cmhashes, err := builder.ReconcileConfigMapHash()
 	if err != nil {
 		return err
 	}
 
-	// builder svc
+	// reconcile svc
 	_, err = builder.ReconcileService()
 	if err != nil {
 		return err
 	}
 
-	// build depoyment or statefulset
+	// reconcile depoyment or statefulset
 	_, err = builder.ReconcileDeployOrSts(cmhashes)
 	if err != nil {
 		return err
 	}
 
-	// build storage
+	// reconcile storage
 	_, err = builder.ReconcileStorage()
 	if err != nil {
 		return err
 	}
 
+	fmt.Println(builder.Store)
 	return nil
 }
