@@ -20,7 +20,8 @@ func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.Parseabl
 		pt.UID,
 	)
 
-	ib := newInternalBuilder(pt, r.Client, getOwnerRef)
+	var ib *internalBuilder
+
 	nodeSpecs := getAllNodeSpecForNodeType(pt)
 
 	parseableConfigMap := []builder.BuilderConfigMap{}
@@ -35,8 +36,10 @@ func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.Parseabl
 	// Get all the k8s config group defined and append to deploymentstatefulset builder
 	// For all the storage config defined in k8s config group append
 	for _, nodeSpec := range nodeSpecs {
+		ib = newInternalBuilder(pt, r.Client, &nodeSpec.NodeSpec, getOwnerRef)
 		for _, parseableConfig := range pt.Spec.ParseableConfigGroup {
-			if nodeSpec.NodeSpec.ParseableConfigGroup == parseableConfig.Name {
+
+			if nodeSpec.NodeSpec.ParseableConfigGroupName == parseableConfig.Name {
 				cm := *ib.makeParseableConfigMap(&parseableConfig)
 				parseableConfigMap = append(parseableConfigMap, cm)
 				parseableConfigMapHash = append(parseableConfigMapHash, builder.BuilderConfigMapHash{Object: &v1.ConfigMap{Data: cm.Data, ObjectMeta: cm.ObjectMeta}})
@@ -45,7 +48,7 @@ func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.Parseabl
 						parseableDeploymentOrStatefulset = append(parseableDeploymentOrStatefulset, *ib.makeStsOrDeploy(&nodeSpec.NodeSpec, &k8sConfig, &k8sConfig.StorageConfig, &parseableConfig))
 						parseableService = *ib.makeService(&k8sConfig, nodeSpec.NodeType)
 						for _, sc := range k8sConfig.StorageConfig {
-							parseableStorage = append(parseableStorage, *ib.makePvc(&sc))
+							parseableStorage = append(parseableStorage, *ib.makePvc(&sc, &k8sConfig))
 						}
 					}
 				}
@@ -69,38 +72,44 @@ func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.Parseabl
 		builder.ToNewBuilderRecorder(builder.BuilderRecorder{Recorder: r.Recorder, ControllerName: "ParseableOperator"}),
 		builder.ToNewBuilderContext(builder.BuilderContext{Context: ctx}),
 		builder.ToNewBuilderService(parseableService),
+		builder.ToNewBuilderStore(*builder.NewStore(ib.client, ib.commonLabels, pt.Namespace, pt)),
 	)
 
 	// All builder methods called are responsible for reconciling
 	// and triggering reconcilers in case of state change.
 
-	// build configmap
+	// reconcile configmap
 	_, err := builder.ReconcileConfigMap()
 	if err != nil {
 		return err
 	}
 
-	// build configmap hash
+	// reconcile configmap hash
 	cmhashes, err := builder.ReconcileConfigMapHash()
 	if err != nil {
 		return err
 	}
 
-	// builder svc
+	// reconcile svc
 	_, err = builder.ReconcileService()
 	if err != nil {
 		return err
 	}
 
-	// build depoyment or statefulset
+	// reconcile depoyment or statefulset
 	_, err = builder.ReconcileDeployOrSts(cmhashes)
 	if err != nil {
 		return err
 	}
 
-	// build storage
+	// reconcile storage
 	_, err = builder.ReconcileStorage()
 	if err != nil {
+		return err
+	}
+
+	// reconcile store
+	if err := builder.ReconcileStore(); err != nil {
 		return err
 	}
 

@@ -23,15 +23,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // ParseableTenantSpec defines the desired state of ParseableTenant
 type ParseableTenantSpec struct {
 	DeploymentOrder      []string                   `json:"deploymentOrder"`
 	External             ExternalSpec               `json:"external,omitempty"`
 	K8sConfigGroup       []K8sConfigGroupSpec       `json:"k8sConfigGroup"`
 	ParseableConfigGroup []ParseableConfigGroupSpec `json:"parseableConfigGroup"`
+	Metadata             Metadata                   `json:"metadata"`
 	Nodes                []NodeSpec                 `json:"nodes"`
 }
 
@@ -80,19 +78,18 @@ type ParseableConfigGroupSpec struct {
 }
 
 type NodeSpec struct {
-	Name                 string   `json:"name"`
-	Kind                 string   `json:"kind"`
-	NodeType             string   `json:"nodeType"`
-	Replicas             int      `json:"replicas"`
-	K8sConfigGroup       string   `json:"k8sConfigGroup"`
-	CliArgs              []string `json:"cliArgs"`
-	ParseableConfigGroup string   `json:"parseableConfigGroup"`
+	Name                     string   `json:"name"`
+	Kind                     string   `json:"kind"`
+	NodeType                 string   `json:"nodeType"`
+	Replicas                 int      `json:"replicas"`
+	K8sConfigGroup           string   `json:"k8sConfigGroup"`
+	CliArgs                  []string `json:"cliArgs"`
+	ParseableConfigGroupName string   `json:"parseableConfigGroup"`
 }
 
 // ParseableTenantStatus defines the observed state of ParseableTenant
 type ParseableTenantStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Version string `json:"statefulSets,omitempty"`
 }
 
 //+kubebuilder:object:root=true

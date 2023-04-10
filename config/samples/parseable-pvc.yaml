@@ -5,7 +5,7 @@ metadata:
 spec:
   nodes:
     - name: parseable-server
-      kind: Deployment
+      kind: Statefulset
       replicas: 1
       nodeType: server
       cliArgs: 

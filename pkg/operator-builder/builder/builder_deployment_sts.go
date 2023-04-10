@@ -45,8 +45,12 @@ func (b BuilderDeploymentStatefulSet) makeDeployment(cmhashes []HashHolder) (*ap
 
 	podSpec = *b.PodSpec
 
-	for i, cmhash := range cmhashes {
-		podSpec.Containers[i].Env = append(podSpec.Containers[i].Env, v1.EnvVar{Name: cmhash.Name, Value: cmhash.HashVaule})
+	if cmhashes != nil {
+		for i := 0; i == len(podSpec.Containers); i++ {
+			for _, cmhash := range cmhashes {
+				podSpec.Containers[i].Env = append(podSpec.Containers[i].Env, v1.EnvVar{Name: cmhash.Name, Value: cmhash.HashVaule})
+			}
+		}
 	}
 
 	return &appsv1.Deployment{
@@ -76,8 +80,12 @@ func (b BuilderDeploymentStatefulSet) MakeStatefulSet(cmhashes []HashHolder) (*a
 
 	podSpec = *b.PodSpec
 
-	for i, cmhash := range cmhashes {
-		podSpec.Containers[i].Env = append(podSpec.Containers[i].Env, v1.EnvVar{Name: cmhash.Name, Value: cmhash.HashVaule})
+	if cmhashes != nil {
+		for i := 0; i == len(podSpec.Containers); i++ {
+			for _, cmhash := range cmhashes {
+				podSpec.Containers[i].Env = append(podSpec.Containers[i].Env, v1.EnvVar{Name: cmhash.Name, Value: cmhash.HashVaule})
+			}
+		}
 	}
 
 	return &appsv1.StatefulSet{
@@ -93,6 +101,9 @@ func (b BuilderDeploymentStatefulSet) MakeStatefulSet(cmhashes []HashHolder) (*a
 			},
 			Template: v1.PodTemplateSpec{
 				Spec: *b.PodSpec,
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: b.Labels,
+				},
 			},
 		},
 	}, nil
@@ -105,6 +116,8 @@ func (s *Builder) buildDeployment(cmhashes []HashHolder) (controllerutil.Operati
 		if err != nil {
 			return controllerutil.OperationResultNone, err
 		}
+
+		s.Put(deployment.GetName(), deployment.Kind)
 
 		deploy.DesiredState = deployment
 		deploy.CurrentState = &appsv1.Deployment{}

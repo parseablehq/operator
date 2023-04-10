@@ -282,6 +282,7 @@ func (in *ParseableTenantSpec) DeepCopyInto(out *ParseableTenantSpec) {
 		*out = make([]ParseableConfigGroupSpec, len(*in))
 		copy(*out, *in)
 	}
+	in.Metadata.DeepCopyInto(&out.Metadata)
 	if in.Nodes != nil {
 		in, out := &in.Nodes, &out.Nodes
 		*out = make([]NodeSpec, len(*in))
