@@ -54,8 +54,8 @@ github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMn
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
-github.com/datainfrahq/operator-builder v1.0.0 h1:25olrUQLk80McFm2joUiT1yq4fF10GrJejO2A/0JG8k=
-github.com/datainfrahq/operator-builder v1.0.0/go.mod h1:xXsMedD434LVk5BVb6YtScLylbwvxwjYtM0RLHVdYN0=
+github.com/datainfrahq/operator-builder v0.0.1 h1:TJROd1NQeODKTio/5d90m0VkiAx2jdjWpzg4j6CBUpw=
+github.com/datainfrahq/operator-builder v0.0.1/go.mod h1:9uObNJSbhLeAQ7UDRNLkAw/olfChAISB5kzNfvVdMV0=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

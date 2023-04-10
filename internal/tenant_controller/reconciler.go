@@ -5,9 +5,9 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 
+	"github.com/datainfrahq/operator-builder/builder"
 	"github.com/go-logr/logr"
 	"github.com/parseablehq/parseable-operator/api/v1beta1"
-	"github.com/parseablehq/parseable-operator/pkg/operator-builder/builder"
 )
 
 func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.ParseableTenant, log logr.Logger) error {

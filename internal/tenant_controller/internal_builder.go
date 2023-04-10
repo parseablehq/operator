@@ -3,8 +3,8 @@ package parseabletenantcontroller
 import (
 	"fmt"
 
+	"github.com/datainfrahq/operator-builder/builder"
 	"github.com/parseablehq/parseable-operator/api/v1beta1"
-	"github.com/parseablehq/parseable-operator/pkg/operator-builder/builder"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
