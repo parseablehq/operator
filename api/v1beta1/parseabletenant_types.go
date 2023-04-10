@@ -29,7 +29,6 @@ type ParseableTenantSpec struct {
 	External             ExternalSpec               `json:"external,omitempty"`
 	K8sConfigGroup       []K8sConfigGroupSpec       `json:"k8sConfigGroup"`
 	ParseableConfigGroup []ParseableConfigGroupSpec `json:"parseableConfigGroup"`
-	Metadata             Metadata                   `json:"metadata"`
 	Nodes                []NodeSpec                 `json:"nodes"`
 }
 
