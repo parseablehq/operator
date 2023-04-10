@@ -1,0 +1,77 @@
+env:
+  RECONCILE_WAIT: "10s"            # Reconciliation delay
+  WATCH_NAMESPACE: ""              # Namespace to watch or empty string to watch all namespaces, To watch multiple namespaces add , into string. Ex: WATCH_NAMESPACE: "ns1,ns2,ns3"
+
+replicaCount: 1
+
+image:
+  repository: parseable/operator
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "edge"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8081
+  initialDelaySeconds: 15
+  periodSeconds: 20
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 8081
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+serviceAccount:
+  # Annotations to add to the service account
+  annotations:
+    kubectl.kubernetes.io/default-container: manager
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: "parseable-operator-controller-manager"
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 128Mi
+  requests:
+    cpu: 10m
+    memory: 64Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/arch
+              operator: In
+              values:
+                - amd64
+                - arm64
+                - ppc64le
+                - s390x
+            - key: kubernetes.io/os
+              operator: In
+              values:
+                - linux

@@ -52,7 +52,7 @@ func NewParseableTenantReconciler(mgr ctrl.Manager) *ParseableTenantReconciler {
 		Log:           initLogger,
 		Scheme:        mgr.GetScheme(),
 		ReconcileWait: LookupReconcileTime(initLogger),
-		Recorder:      mgr.GetEventRecorderFor("druid-operator"),
+		Recorder:      mgr.GetEventRecorderFor("parseable-operator"),
 	}
 }
 
