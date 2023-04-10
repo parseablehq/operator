@@ -12,14 +12,6 @@ spec:
       - local-store
       k8sConfigGroup: k8s-server
       parseableConfigGroup: server-config
-    - name: parseable-server-new
-      kind: Deployment
-      replicas: 1
-      nodeType: server
-      cliArgs: 
-      - local-store
-      k8sConfigGroup: k8s-server
-      parseableConfigGroup: server-config
   deploymentOrder:
   - server
   k8sConfigGroup:

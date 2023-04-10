@@ -29,19 +29,24 @@ type internalBuilder struct {
 func newInternalBuilder(
 	pt *v1beta1.ParseableTenant,
 	client client.Client,
+	nodeSpec *v1beta1.NodeSpec,
 	ownerRef *metav1.OwnerReference) *internalBuilder {
 	return &internalBuilder{
 		parseableTenant: pt,
 		client:          client,
 		ownerRef:        ownerRef,
+		commonLabels:    makeLabels(pt, nodeSpec),
 	}
 }
 
 func (ib *internalBuilder) makeExternalConfigMap() *builder.BuilderConfigMap {
 	return &builder.BuilderConfigMap{
 		CommonBuilder: builder.CommonBuilder{
-			ObjectMeta: metav1.ObjectMeta{Name: ib.parseableTenant.GetName() + "-external",
-				Namespace: ib.parseableTenant.GetNamespace()},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      ib.parseableTenant.GetName() + "-external",
+				Namespace: ib.parseableTenant.GetNamespace(),
+				Labels:    ib.commonLabels,
+			},
 			Client:   ib.client,
 			CrObject: ib.parseableTenant,
 			OwnerRef: *ib.ownerRef,
@@ -56,8 +61,11 @@ func (ib *internalBuilder) makeParseableConfigMap(parseableConfigGroup *v1beta1.
 
 	configMap := &builder.BuilderConfigMap{
 		CommonBuilder: builder.CommonBuilder{
-			ObjectMeta: metav1.ObjectMeta{Name: parseableConfigGroup.Name,
-				Namespace: ib.parseableTenant.GetNamespace()},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      parseableConfigGroup.Name,
+				Namespace: ib.parseableTenant.GetNamespace(),
+				Labels:    ib.commonLabels,
+			},
 			Client:   ib.client,
 			CrObject: ib.parseableTenant,
 			OwnerRef: *ib.ownerRef,
@@ -155,14 +163,14 @@ func (ib *internalBuilder) makeStsOrDeploy(
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      ptNode.K8sConfigGroup + ptNode.Name,
 				Namespace: ib.parseableTenant.GetNamespace(),
-				Labels:    makeSelectorLabels(ptNode.NodeType),
+				Labels:    ib.commonLabels,
 			},
 			Client:   ib.client,
 			CrObject: ib.parseableTenant,
 			OwnerRef: *ib.ownerRef,
 		},
 		Replicas: int32(ptNode.Replicas),
-		Labels:   makeSelectorLabels(ptNode.NodeType),
+		Labels:   ib.commonLabels,
 		Kind:     ptNode.Kind,
 		PodSpec:  &podSpec,
 	}
@@ -170,13 +178,14 @@ func (ib *internalBuilder) makeStsOrDeploy(
 	return &deployment
 }
 
-func (ib *internalBuilder) makePvc(pvc *v1beta1.StorageConfig) *builder.BuilderStorageConfig {
+func (ib *internalBuilder) makePvc(pvc *v1beta1.StorageConfig, k8sConfig *v1beta1.K8sConfigGroupSpec) *builder.BuilderStorageConfig {
 	return &builder.BuilderStorageConfig{
 		CommonBuilder: builder.CommonBuilder{
-			ObjectMeta: metav1.ObjectMeta{Name: pvc.Name,
+			ObjectMeta: metav1.ObjectMeta{Name: k8sConfig.Name + "-" + pvc.Name,
 				Namespace: ib.parseableTenant.GetNamespace()},
 			Client:   ib.client,
 			CrObject: ib.parseableTenant,
+			Labels:   ib.commonLabels,
 			OwnerRef: *ib.ownerRef,
 		},
 		PvcSpec: &pvc.PvcSpec,
@@ -193,15 +202,19 @@ func (ib *internalBuilder) makeService(k8sConfig *v1beta1.K8sConfigGroupSpec, no
 			OwnerRef: *ib.ownerRef,
 			Labels:   ib.commonLabels,
 		},
-		SelectorLabels: makeSelectorLabels(nodeType),
+		SelectorLabels: ib.commonLabels,
 		ServiceSpec:    k8sConfig.Service,
 	}
 }
 
-func makeSelectorLabels(nodeType string) map[string]string {
+func makeLabels(pt *v1beta1.ParseableTenant, nodeSpec *v1beta1.NodeSpec) map[string]string {
+
 	return map[string]string{
-		"nodeType": nodeType,
-		"app":      "parseable",
+		"app":                  "parseable",
+		"parseable_cr":         pt.Name,
+		"nodeType":             nodeSpec.NodeType,
+		"parseableConfigGroup": nodeSpec.ParseableConfigGroupName,
+		"k8sConfigGroup":       nodeSpec.K8sConfigGroup,
 	}
 }
 

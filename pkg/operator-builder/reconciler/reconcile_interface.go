@@ -12,6 +12,7 @@ type ReconcileInterface interface {
 	ReconcileDeployOrSts(cmHashes []builder.HashHolder) (controllerutil.OperationResult, error)
 	ReconcileStorage() (controllerutil.OperationResult, error)
 	ReconcileService() (controllerutil.OperationResult, error)
+	ReconcileStore() error
 }
 
 var Reconciler ReconcileInterface = builder.NewBuilder()

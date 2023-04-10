@@ -2,7 +2,6 @@ package parseabletenantcontroller
 
 import (
 	"context"
-	"fmt"
 
 	v1 "k8s.io/api/core/v1"
 
@@ -21,7 +20,7 @@ func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.Parseabl
 		pt.UID,
 	)
 
-	ib := newInternalBuilder(pt, r.Client, getOwnerRef)
+	var ib *internalBuilder
 
 	nodeSpecs := getAllNodeSpecForNodeType(pt)
 
@@ -37,7 +36,7 @@ func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.Parseabl
 	// Get all the k8s config group defined and append to deploymentstatefulset builder
 	// For all the storage config defined in k8s config group append
 	for _, nodeSpec := range nodeSpecs {
-
+		ib = newInternalBuilder(pt, r.Client, &nodeSpec.NodeSpec, getOwnerRef)
 		for _, parseableConfig := range pt.Spec.ParseableConfigGroup {
 
 			if nodeSpec.NodeSpec.ParseableConfigGroupName == parseableConfig.Name {
@@ -49,7 +48,7 @@ func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.Parseabl
 						parseableDeploymentOrStatefulset = append(parseableDeploymentOrStatefulset, *ib.makeStsOrDeploy(&nodeSpec.NodeSpec, &k8sConfig, &k8sConfig.StorageConfig, &parseableConfig))
 						parseableService = *ib.makeService(&k8sConfig, nodeSpec.NodeType)
 						for _, sc := range k8sConfig.StorageConfig {
-							parseableStorage = append(parseableStorage, *ib.makePvc(&sc))
+							parseableStorage = append(parseableStorage, *ib.makePvc(&sc, &k8sConfig))
 						}
 					}
 				}
@@ -73,7 +72,7 @@ func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.Parseabl
 		builder.ToNewBuilderRecorder(builder.BuilderRecorder{Recorder: r.Recorder, ControllerName: "ParseableOperator"}),
 		builder.ToNewBuilderContext(builder.BuilderContext{Context: ctx}),
 		builder.ToNewBuilderService(parseableService),
-		builder.ToNewBuilderStore(*builder.NewStore()),
+		builder.ToNewBuilderStore(*builder.NewStore(ib.client, ib.commonLabels, pt.Namespace, pt)),
 	)
 
 	// All builder methods called are responsible for reconciling
@@ -109,6 +108,10 @@ func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.Parseabl
 		return err
 	}
 
-	fmt.Println(builder.Store)
+	// reconcile store
+	if err := builder.ReconcileStore(); err != nil {
+		return err
+	}
+
 	return nil
 }

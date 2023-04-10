@@ -39,7 +39,7 @@ func (s *Builder) ReconcileStorage() (controllerutil.OperationResult, error) {
 	return controllerutil.OperationResultNone, nil
 }
 
-func (b BuilderStorageConfig) MakePvc() (*v1.PersistentVolumeClaim, error) {
+func (b *BuilderStorageConfig) MakePvc() (*v1.PersistentVolumeClaim, error) {
 	return &v1.PersistentVolumeClaim{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
