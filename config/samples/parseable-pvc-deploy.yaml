@@ -1,11 +1,11 @@
 apiVersion: parseable.io/v1beta1
 kind: ParseableTenant
 metadata:
-  name: parseable
+  name: parseable-sts
 spec:
   nodes:
     - name: parseable-server
-      kind: Statefulset
+      kind: Deployment
       replicas: 1
       nodeType: server
       cliArgs: 

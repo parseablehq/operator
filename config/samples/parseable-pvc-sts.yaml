@@ -1,7 +1,7 @@
 apiVersion: parseable.io/v1beta1
 kind: ParseableTenant
 metadata:
-  name: parseable-empty
+  name: parseable
 spec:
   nodes:
     - name: parseable-server
@@ -18,26 +18,35 @@ spec:
   - name: k8s-server
     image: parseable/parseable:v0.3.0
     service:
-     type: LoadBalancer
+     type: ClusterIP
      ports:
       - protocol: TCP
         port: 80
         targetPort: 8000
-    volumes:
-    - emptyDir: {}
-      name: stage-volume
-    - emptyDir: {}
-      name: data-volume
-    volumeMount:
-      - mountPath: /parseable/data
-        name: data-volume
-      - mountPath: /parseable/staging
-        name: stage-volume
+    storageConfig:
+    - name: stage-volume
+      mountPath: "/parseable/staging"
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        storageClassName: "civo-volume"
+        resources:
+          requests:
+            storage: 10Gi
+    - name: data-volume
+      mountPath: "/parseable/data"
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        storageClassName: "civo-volume"
+        resources:
+          requests:
+            storage: 10Gi
   parseableConfigGroup:
   - name: server-config
     data: |-
       P_ADDR=0.0.0.0:8000 
       P_STAGING_DIR=./staging
       P_FS_DIR=./data
-      P_USERNAME=admin123
-      P_PASSWORD=admin123
+      P_USERNAME=admin
+      P_PASSWORD=admin

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/datainfrahq/operator-builder/builder"
+	"github.com/datainfrahq/operator-builder/utils"
 	"github.com/parseablehq/parseable-operator/api/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -83,6 +84,7 @@ func (ib *internalBuilder) makeStsOrDeploy(
 	k8sConfigGroup *v1beta1.K8sConfigGroupSpec,
 	storageConfig *[]v1beta1.StorageConfig,
 	parseableConfigGroup *v1beta1.ParseableConfigGroupSpec,
+	configHash []utils.ConfigMapHash,
 ) *builder.BuilderDeploymentStatefulSet {
 
 	var args = []string{"parseable"}
@@ -129,7 +131,7 @@ func (ib *internalBuilder) makeStsOrDeploy(
 		Containers: []v1.Container{
 
 			{
-				Name:            ptNode.NodeType,
+				Name:            ptNode.Name + "-" + ptNode.NodeType,
 				Image:           k8sConfigGroup.Image,
 				Args:            args,
 				ImagePullPolicy: k8sConfigGroup.ImagePullPolicy,
@@ -141,7 +143,7 @@ func (ib *internalBuilder) makeStsOrDeploy(
 						ContainerPort: 8000,
 					},
 				},
-				Env: getEnv(*k8sConfigGroup),
+				Env: getEnv(*k8sConfigGroup, configHash),
 				EnvFrom: []v1.EnvFromSource{
 					{
 						ConfigMapRef: &v1.ConfigMapEnvSource{
@@ -154,7 +156,7 @@ func (ib *internalBuilder) makeStsOrDeploy(
 				VolumeMounts: getVolumeMounts(k8sConfigGroup, storageConfig),
 			},
 		},
-		Volumes:            getVolume(k8sConfigGroup, storageConfig),
+		Volumes:            getVolume(k8sConfigGroup, storageConfig, ptNode),
 		ServiceAccountName: k8sConfigGroup.ServiceAccountName,
 	}
 
@@ -178,24 +180,33 @@ func (ib *internalBuilder) makeStsOrDeploy(
 	return &deployment
 }
 
-func (ib *internalBuilder) makePvc(pvc *v1beta1.StorageConfig, k8sConfig *v1beta1.K8sConfigGroupSpec) *builder.BuilderStorageConfig {
+func (ib *internalBuilder) makePvc(
+	sc *v1beta1.StorageConfig,
+	k8sConfig *v1beta1.K8sConfigGroupSpec,
+	nodeSpec *v1beta1.NodeSpec,
+) *builder.BuilderStorageConfig {
 	return &builder.BuilderStorageConfig{
 		CommonBuilder: builder.CommonBuilder{
-			ObjectMeta: metav1.ObjectMeta{Name: k8sConfig.Name + "-" + pvc.Name,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nodeSpec.Name + "-" + k8sConfig.Name + "-" + sc.Name,
 				Namespace: ib.parseableTenant.GetNamespace()},
 			Client:   ib.client,
 			CrObject: ib.parseableTenant,
 			Labels:   ib.commonLabels,
 			OwnerRef: *ib.ownerRef,
 		},
-		PvcSpec: &pvc.PvcSpec,
+		PvcSpec: &sc.PvcSpec,
 	}
 }
 
-func (ib *internalBuilder) makeService(k8sConfig *v1beta1.K8sConfigGroupSpec, nodeType string) *builder.BuilderService {
+func (ib *internalBuilder) makeService(
+	k8sConfig *v1beta1.K8sConfigGroupSpec,
+	nodeSpec *v1beta1.NodeSpec,
+) *builder.BuilderService {
 	return &builder.BuilderService{
 		CommonBuilder: builder.CommonBuilder{
-			ObjectMeta: metav1.ObjectMeta{Name: k8sConfig.Name,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nodeSpec.Name + "-" + k8sConfig.Name,
 				Namespace: ib.parseableTenant.GetNamespace()},
 			Client:   ib.client,
 			CrObject: ib.parseableTenant,
@@ -242,7 +253,11 @@ func getVolumeMounts(k8sConfig *v1beta1.K8sConfigGroupSpec, storageConfig *[]v1b
 	return volumeMount
 }
 
-func getVolume(k8sConfig *v1beta1.K8sConfigGroupSpec, storageConfig *[]v1beta1.StorageConfig) []v1.Volume {
+func getVolume(
+	k8sConfig *v1beta1.K8sConfigGroupSpec,
+	storageConfig *[]v1beta1.StorageConfig,
+	nodeSpec *v1beta1.NodeSpec,
+) []v1.Volume {
 	var volumeHolder = []v1.Volume{}
 
 	for _, sc := range *storageConfig {
@@ -250,7 +265,7 @@ func getVolume(k8sConfig *v1beta1.K8sConfigGroupSpec, storageConfig *[]v1beta1.S
 			Name: sc.Name,
 			VolumeSource: v1.VolumeSource{
 				PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
-					ClaimName: sc.Name,
+					ClaimName: nodeSpec.Name + "-" + k8sConfig.Name + "-" + sc.Name,
 				}},
 		})
 	}
@@ -259,12 +274,19 @@ func getVolume(k8sConfig *v1beta1.K8sConfigGroupSpec, storageConfig *[]v1beta1.S
 	return volumeHolder
 }
 
-func getEnv(k8sConfigGroup v1beta1.K8sConfigGroupSpec) []v1.EnvVar {
-	var envHolder []v1.EnvVar
+func getEnv(k8sConfigGroup v1beta1.K8sConfigGroupSpec, configHash []utils.ConfigMapHash) []v1.EnvVar {
+	var envHolder, hashHolder []v1.EnvVar
 
 	for _, env := range k8sConfigGroup.Env {
 		envHolder = append(envHolder, env)
 	}
+	hashes, _ := utils.MakeConfigMapHash(configHash)
+
+	for _, cmhash := range hashes {
+		hashHolder = append(hashHolder, v1.EnvVar{Name: cmhash.Name, Value: cmhash.HashVaule})
+	}
+
+	envHolder = append(envHolder, hashHolder...)
 
 	return envHolder
 }
