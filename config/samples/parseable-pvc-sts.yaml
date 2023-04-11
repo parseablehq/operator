@@ -1,7 +1,7 @@
 apiVersion: parseable.io/v1beta1
 kind: ParseableTenant
 metadata:
-  name: parseable
+  name: parseable-deploy
 spec:
   nodes:
     - name: parseable-server

@@ -3,7 +3,7 @@ module github.com/parseablehq/parseable-operator
 go 1.19
 
 require (
-	github.com/datainfrahq/operator-builder v0.0.1
+	github.com/datainfrahq/operator-builder v0.0.0-20230411152028-55e99c1360cb
 	github.com/go-logr/logr v1.2.4
 	github.com/onsi/ginkgo/v2 v2.9.2
 	github.com/onsi/gomega v1.27.6
