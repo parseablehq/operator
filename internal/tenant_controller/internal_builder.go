@@ -3,9 +3,9 @@ package parseabletenantcontroller
 import (
 	"fmt"
 
-	"github.com/datainfrahq/operator-builder/builder"
-	"github.com/datainfrahq/operator-builder/utils"
 	"github.com/parseablehq/parseable-operator/api/v1beta1"
+	"github.com/parseablehq/parseable-operator/pkg/operator-builder/builder"
+	"github.com/parseablehq/parseable-operator/pkg/operator-builder/utils"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -58,12 +58,15 @@ func (ib *internalBuilder) makeExternalConfigMap() *builder.BuilderConfigMap {
 	}
 }
 
-func (ib *internalBuilder) makeParseableConfigMap(parseableConfigGroup *v1beta1.ParseableConfigGroupSpec) *builder.BuilderConfigMap {
+func (ib *internalBuilder) makeParseableConfigMap(
+	parseableConfigGroup *v1beta1.ParseableConfigGroupSpec,
+	nodeSpec *v1beta1.NodeSpec,
+) *builder.BuilderConfigMap {
 
 	configMap := &builder.BuilderConfigMap{
 		CommonBuilder: builder.CommonBuilder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      parseableConfigGroup.Name,
+				Name:      nodeSpec.Name + "-" + parseableConfigGroup.Name,
 				Namespace: ib.parseableTenant.GetNamespace(),
 				Labels:    ib.commonLabels,
 			},
@@ -222,7 +225,7 @@ func makeLabels(pt *v1beta1.ParseableTenant, nodeSpec *v1beta1.NodeSpec) map[str
 
 	return map[string]string{
 		"app":                  "parseable",
-		"parseable_cr":         pt.Name,
+		"custom_resource":      pt.Name,
 		"nodeType":             nodeSpec.NodeType,
 		"parseableConfigGroup": nodeSpec.ParseableConfigGroupName,
 		"k8sConfigGroup":       nodeSpec.K8sConfigGroup,

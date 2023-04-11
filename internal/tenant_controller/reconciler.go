@@ -5,10 +5,10 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/datainfrahq/operator-builder/builder"
-	"github.com/datainfrahq/operator-builder/utils"
 	"github.com/go-logr/logr"
 	"github.com/parseablehq/parseable-operator/api/v1beta1"
+	"github.com/parseablehq/parseable-operator/pkg/operator-builder/builder"
+	"github.com/parseablehq/parseable-operator/pkg/operator-builder/utils"
 )
 
 func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.ParseableTenant, log logr.Logger) error {
@@ -49,7 +49,7 @@ func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.Parseabl
 		for _, parseableConfig := range pt.Spec.ParseableConfigGroup {
 
 			if nodeSpec.NodeSpec.ParseableConfigGroupName == parseableConfig.Name {
-				cm := *ib.makeParseableConfigMap(&parseableConfig)
+				cm := *ib.makeParseableConfigMap(&parseableConfig, &nodeSpec.NodeSpec)
 				parseableConfigMap = append(parseableConfigMap, cm)
 				parseableConfigMapHash = append(parseableConfigMapHash, utils.ConfigMapHash{Object: &v1.ConfigMap{Data: cm.Data, ObjectMeta: cm.ObjectMeta}})
 				for _, k8sConfig := range pt.Spec.K8sConfigGroup {
