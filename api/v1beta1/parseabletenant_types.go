@@ -25,11 +25,11 @@ import (
 
 // ParseableTenantSpec defines the desired state of ParseableTenant
 type ParseableTenantSpec struct {
-	DeploymentOrder      []string                   `json:"deploymentOrder"`
-	External             ExternalSpec               `json:"external,omitempty"`
-	K8sConfigGroup       []K8sConfigGroupSpec       `json:"k8sConfigGroup"`
-	ParseableConfigGroup []ParseableConfigGroupSpec `json:"parseableConfigGroup"`
-	Nodes                []NodeSpec                 `json:"nodes"`
+	DeploymentOrder      []string              `json:"deploymentOrder"`
+	External             ExternalSpec          `json:"external,omitempty"`
+	K8sConfig            []K8sConfigSpec       `json:"k8sConfig"`
+	ParseableConfigGroup []ParseableConfigSpec `json:"parseableConfigGroup"`
+	Nodes                []NodeSpec            `json:"nodes"`
 }
 
 type ExternalSpec struct {
@@ -45,19 +45,20 @@ type ObjectStoreConfig struct {
 	Data string `json:"data"`
 }
 
-type K8sConfigGroupSpec struct {
-	Name               string            `json:"name"`
-	Volumes            []v1.Volume       `json:"volumes,omitempty"`
-	VolumeMount        []v1.VolumeMount  `json:"volumeMount,omitempty"`
-	Image              string            `json:"image"`
-	ImagePullPolicy    v1.PullPolicy     `json:"imagePullPolicy,omitempty"`
-	ServiceAccountName string            `json:"serviceAccountName,omitempty"`
-	Env                []v1.EnvVar       `json:"env,omitempty"`
-	Tolerations        []v1.Toleration   `json:"tolerations,omitempty"`
-	PodMetadata        Metadata          `json:"podMetadata,omitempty"`
-	StorageConfig      []StorageConfig   `json:"storageConfig,omitempty"`
-	NodeSelector       map[string]string `json:"nodeSelector,omitempty"`
-	Service            *v1.ServiceSpec   `json:"service,omitempty"`
+type K8sConfigSpec struct {
+	Name               string                  `json:"name"`
+	Volumes            []v1.Volume             `json:"volumes,omitempty"`
+	VolumeMount        []v1.VolumeMount        `json:"volumeMount,omitempty"`
+	Image              string                  `json:"image"`
+	ImagePullPolicy    v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
+	ServiceAccountName string                  `json:"serviceAccountName,omitempty"`
+	Env                []v1.EnvVar             `json:"env,omitempty"`
+	Tolerations        []v1.Toleration         `json:"tolerations,omitempty"`
+	PodMetadata        Metadata                `json:"podMetadata,omitempty"`
+	StorageConfig      []StorageConfig         `json:"storageConfig,omitempty"`
+	NodeSelector       map[string]string       `json:"nodeSelector,omitempty"`
+	Service            *v1.ServiceSpec         `json:"service,omitempty"`
+	Resources          v1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 type Metadata struct {
@@ -71,19 +72,19 @@ type StorageConfig struct {
 	PvcSpec   v1.PersistentVolumeClaimSpec `json:"spec"`
 }
 
-type ParseableConfigGroupSpec struct {
-	Name string `json:"name"`
-	Data string `json:"data"`
+type ParseableConfigSpec struct {
+	Name    string   `json:"name"`
+	EnvVars string   `json:"env"`
+	CliArgs []string `json:"cliArgs"`
 }
 
 type NodeSpec struct {
-	Name                     string   `json:"name"`
-	Kind                     string   `json:"kind"`
-	NodeType                 string   `json:"nodeType"`
-	Replicas                 int      `json:"replicas"`
-	K8sConfigGroup           string   `json:"k8sConfigGroup"`
-	CliArgs                  []string `json:"cliArgs"`
-	ParseableConfigGroupName string   `json:"parseableConfigGroup"`
+	Name            string `json:"name"`
+	Kind            string `json:"kind"`
+	Type            string `json:"type"`
+	Replicas        int    `json:"replicas"`
+	K8sConfig       string `json:"k8sConfig"`
+	ParseableConfig string `json:"parseableConfig"`
 }
 
 // ParseableTenantStatus defines the observed state of ParseableTenant

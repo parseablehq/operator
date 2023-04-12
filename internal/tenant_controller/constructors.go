@@ -35,8 +35,8 @@ func getAllNodeSpecForNodeType(pt *v1beta1.ParseableTenant) []NodeTypeNodeSpec {
 	}
 
 	for _, nodeSpec := range pt.Spec.Nodes {
-		nodeSpecs := nodeSpecsByNodeType[nodeSpec.NodeType]
-		nodeSpecsByNodeType[nodeSpec.NodeType] = append(nodeSpecs, NodeTypeNodeSpec{nodeSpec.NodeType, nodeSpec})
+		nodeSpecs := nodeSpecsByNodeType[nodeSpec.Type]
+		nodeSpecsByNodeType[nodeSpec.Type] = append(nodeSpecs, NodeTypeNodeSpec{nodeSpec.Type, nodeSpec})
 
 	}
 
