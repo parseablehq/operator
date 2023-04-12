@@ -59,7 +59,7 @@ spec:
                 required:
                 - objectStore
                 type: object
-              k8sConfigGroup:
+              k8sConfig:
                 items:
                   properties:
                     env:
@@ -200,6 +200,56 @@ spec:
                         labels:
                           additionalProperties:
                             type: string
+                          type: object
+                      type: object
+                    resources:
+                      description: ResourceRequirements describes the compute resource
+                        requirements.
+                      properties:
+                        claims:
+                          description: "Claims lists the names of resources, defined
+                            in spec.resourceClaims, that are used by this container.
+                            \n This is an alpha field and requires enabling the DynamicResourceAllocation
+                            feature gate. \n This field is immutable. It can only
+                            be set for containers."
+                          items:
+                            description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                            properties:
+                              name:
+                                description: Name must match the name of one entry
+                                  in pod.spec.resourceClaims of the Pod where this
+                                  field is used. It makes that resource available
+                                  inside a container.
+                                type: string
+                            required:
+                            - name
+                            type: object
+                          type: array
+                          x-kubernetes-list-map-keys:
+                          - name
+                          x-kubernetes-list-type: map
+                        limits:
+                          additionalProperties:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          description: 'Limits describes the maximum amount of compute
+                            resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                          type: object
+                        requests:
+                          additionalProperties:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          description: 'Requests describes the minimum amount of compute
+                            resources required. If Requests is omitted for a container,
+                            it defaults to Limits if that is explicitly specified,
+                            otherwise to an implementation-defined value. More info:
+                            https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                           type: object
                       type: object
                     service:
@@ -2534,47 +2584,47 @@ spec:
               nodes:
                 items:
                   properties:
-                    cliArgs:
-                      items:
-                        type: string
-                      type: array
-                    k8sConfigGroup:
+                    k8sConfig:
                       type: string
                     kind:
                       type: string
                     name:
                       type: string
-                    nodeType:
-                      type: string
-                    parseableConfigGroup:
+                    parseableConfig:
                       type: string
                     replicas:
                       type: integer
+                    type:
+                      type: string
                   required:
-                  - cliArgs
-                  - k8sConfigGroup
+                  - k8sConfig
                   - kind
                   - name
-                  - nodeType
-                  - parseableConfigGroup
+                  - parseableConfig
                   - replicas
+                  - type
                   type: object
                 type: array
               parseableConfigGroup:
                 items:
                   properties:
-                    data:
+                    cliArgs:
+                      items:
+                        type: string
+                      type: array
+                    env:
                       type: string
                     name:
                       type: string
                   required:
-                  - data
+                  - cliArgs
+                  - env
                   - name
                   type: object
                 type: array
             required:
             - deploymentOrder
-            - k8sConfigGroup
+            - k8sConfig
             - nodes
             - parseableConfigGroup
             type: object

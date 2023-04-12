@@ -24,7 +24,7 @@ spec:
   - server
   k8sConfigGroup:
   - name: k8s-server
-    image: parseable/parseable:v0.3.0
+    image: parseable/parseable:v0.4.0
     service:
      type: ClusterIP
      ports:
@@ -51,7 +51,7 @@ spec:
           requests:
             storage: 10Gi
   - name: k8s-server-new
-    image: parseable/parseable:v0.3.0
+    image: parseable/parseable:v0.4.0
     service:
      type: ClusterIP
      ports:

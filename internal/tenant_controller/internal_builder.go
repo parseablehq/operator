@@ -14,10 +14,10 @@ import (
 
 type ib interface {
 	makeExternalConfigMap() *builder.BuilderConfigMap
-	makeParseableConfigMap(parseableConfigGroup *v1beta1.ParseableConfigGroupSpec) *builder.BuilderConfigMap
-	makeStsOrDeploy(ptNode *v1beta1.NodeSpec, k8sConfigGroup *v1beta1.K8sConfigGroupSpec, storageConfig *[]v1beta1.StorageConfig, parseableConfigGroup *v1beta1.ParseableConfigGroupSpec) *builder.BuilderDeploymentStatefulSet
+	makeParseableConfigMap(parseableConfigGroup *v1beta1.ParseableConfigSpec) *builder.BuilderConfigMap
+	makeStsOrDeploy(ptNode *v1beta1.NodeSpec, k8sConfigGroup *v1beta1.K8sConfigSpec, storageConfig *[]v1beta1.StorageConfig, parseableConfigGroup *v1beta1.ParseableConfigSpec) *builder.BuilderDeploymentStatefulSet
 	makePvc(pvc *v1beta1.StorageConfig) *builder.BuilderStorageConfig
-	makeService(k8sConfig *v1beta1.K8sConfigGroupSpec, selectorLabel map[string]string) *builder.BuilderService
+	makeService(k8sConfig *v1beta1.K8sConfigSpec, selectorLabel map[string]string) *builder.BuilderService
 }
 
 type internalBuilder struct {
@@ -59,7 +59,7 @@ func (ib *internalBuilder) makeExternalConfigMap() *builder.BuilderConfigMap {
 }
 
 func (ib *internalBuilder) makeParseableConfigMap(
-	parseableConfigGroup *v1beta1.ParseableConfigGroupSpec,
+	parseableConfigGroup *v1beta1.ParseableConfigSpec,
 	ptNode *v1beta1.NodeSpec,
 ) *builder.BuilderConfigMap {
 
@@ -75,7 +75,7 @@ func (ib *internalBuilder) makeParseableConfigMap(
 			OwnerRef: *ib.ownerRef,
 		},
 		Data: map[string]string{
-			"data": fmt.Sprintf("%s", parseableConfigGroup.Data),
+			"data": fmt.Sprintf("%s", parseableConfigGroup.EnvVars),
 		},
 	}
 
@@ -84,19 +84,15 @@ func (ib *internalBuilder) makeParseableConfigMap(
 
 func (ib *internalBuilder) makeStsOrDeploy(
 	ptNode *v1beta1.NodeSpec,
-	k8sConfigGroup *v1beta1.K8sConfigGroupSpec,
+	k8sConfigGroup *v1beta1.K8sConfigSpec,
 	storageConfig *[]v1beta1.StorageConfig,
-	parseableConfigGroup *v1beta1.ParseableConfigGroupSpec,
+	parseableConfigGroup *v1beta1.ParseableConfigSpec,
 	configHash []utils.ConfigMapHash,
 ) *builder.BuilderDeploymentStatefulSet {
 
-	var args = []string{"parseable"}
-
-	for _, arg := range ptNode.CliArgs {
-		args = append(args, arg)
-	}
-
 	b := false
+	args := []string{"parseable"}
+	args = append(args, parseableConfigGroup.CliArgs...)
 
 	var envFrom []v1.EnvFromSource
 	configCm := v1.EnvFromSource{
@@ -132,9 +128,8 @@ func (ib *internalBuilder) makeStsOrDeploy(
 			FSGroupChangePolicy: &fsPolicy,
 		},
 		Containers: []v1.Container{
-
 			{
-				Name:            ptNode.Name + "-" + ptNode.NodeType,
+				Name:            ptNode.Name + "-" + ptNode.Type,
 				Image:           k8sConfigGroup.Image,
 				Args:            args,
 				ImagePullPolicy: k8sConfigGroup.ImagePullPolicy,
@@ -149,6 +144,7 @@ func (ib *internalBuilder) makeStsOrDeploy(
 				Env:          getEnv(*k8sConfigGroup, configHash),
 				EnvFrom:      envFrom,
 				VolumeMounts: getVolumeMounts(k8sConfigGroup, storageConfig),
+				Resources:    k8sConfigGroup.Resources,
 			},
 		},
 		Volumes:            getVolume(k8sConfigGroup, storageConfig, ptNode),
@@ -158,7 +154,7 @@ func (ib *internalBuilder) makeStsOrDeploy(
 	deployment := builder.BuilderDeploymentStatefulSet{
 		CommonBuilder: builder.CommonBuilder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      ptNode.K8sConfigGroup + "-" + ptNode.Name,
+				Name:      ptNode.K8sConfig + "-" + ptNode.Name,
 				Namespace: ib.parseableTenant.GetNamespace(),
 				Labels:    ib.commonLabels,
 			},
@@ -177,7 +173,7 @@ func (ib *internalBuilder) makeStsOrDeploy(
 
 func (ib *internalBuilder) makePvc(
 	sc *v1beta1.StorageConfig,
-	k8sConfig *v1beta1.K8sConfigGroupSpec,
+	k8sConfig *v1beta1.K8sConfigSpec,
 	ptNode *v1beta1.NodeSpec,
 ) *builder.BuilderStorageConfig {
 	return &builder.BuilderStorageConfig{
@@ -195,7 +191,7 @@ func (ib *internalBuilder) makePvc(
 }
 
 func (ib *internalBuilder) makeService(
-	k8sConfig *v1beta1.K8sConfigGroupSpec,
+	k8sConfig *v1beta1.K8sConfigSpec,
 	nodeSpec *v1beta1.NodeSpec,
 ) *builder.BuilderService {
 	return &builder.BuilderService{
@@ -218,23 +214,18 @@ func makeLabels(pt *v1beta1.ParseableTenant, nodeSpec *v1beta1.NodeSpec) map[str
 	return map[string]string{
 		"app":                  "parseable",
 		"custom_resource":      pt.Name,
-		"nodeType":             nodeSpec.NodeType,
-		"parseableConfigGroup": nodeSpec.ParseableConfigGroupName,
-		"k8sConfigGroup":       nodeSpec.K8sConfigGroup,
+		"nodeType":             nodeSpec.Type,
+		"parseableConfigGroup": nodeSpec.ParseableConfig,
+		"k8sConfigGroup":       nodeSpec.K8sConfig,
 	}
 }
 
-func getTolerations(k8sConfig *v1beta1.K8sConfigGroupSpec) []v1.Toleration {
+func getTolerations(k8sConfig *v1beta1.K8sConfigSpec) []v1.Toleration {
 	tolerations := []v1.Toleration{}
-
-	for _, val := range k8sConfig.Tolerations {
-		tolerations = append(tolerations, val)
-	}
-
-	return tolerations
+	return append(tolerations, k8sConfig.Tolerations...)
 }
 
-func getVolumeMounts(k8sConfig *v1beta1.K8sConfigGroupSpec, storageConfig *[]v1beta1.StorageConfig) []v1.VolumeMount {
+func getVolumeMounts(k8sConfig *v1beta1.K8sConfigSpec, storageConfig *[]v1beta1.StorageConfig) []v1.VolumeMount {
 
 	var volumeMount = []v1.VolumeMount{}
 	for _, sc := range *storageConfig {
@@ -249,7 +240,7 @@ func getVolumeMounts(k8sConfig *v1beta1.K8sConfigGroupSpec, storageConfig *[]v1b
 }
 
 func getVolume(
-	k8sConfig *v1beta1.K8sConfigGroupSpec,
+	k8sConfig *v1beta1.K8sConfigSpec,
 	storageConfig *[]v1beta1.StorageConfig,
 	ptNode *v1beta1.NodeSpec,
 ) []v1.Volume {
@@ -269,21 +260,18 @@ func getVolume(
 	return volumeHolder
 }
 
-func getEnv(k8sConfigGroup v1beta1.K8sConfigGroupSpec, configHash []utils.ConfigMapHash) []v1.EnvVar {
-	var envHolder, hashHolder []v1.EnvVar
+func getEnv(k8sConfigGroup v1beta1.K8sConfigSpec, configHash []utils.ConfigMapHash) []v1.EnvVar {
+	var envs, hashHolder []v1.EnvVar
+	envs = append(envs, k8sConfigGroup.Env...)
 
-	for _, env := range k8sConfigGroup.Env {
-		envHolder = append(envHolder, env)
-	}
 	hashes, _ := utils.MakeConfigMapHash(configHash)
 
 	for _, cmhash := range hashes {
 		hashHolder = append(hashHolder, v1.EnvVar{Name: cmhash.Name, Value: cmhash.HashVaule})
 	}
 
-	envHolder = append(envHolder, hashHolder...)
-
-	return envHolder
+	envs = append(envs, hashHolder...)
+	return envs
 }
 
 func makeConfigMapName(nodeName, configGroupName string) string {

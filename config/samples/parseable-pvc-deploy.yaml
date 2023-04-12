@@ -1,52 +1,58 @@
 apiVersion: parseable.io/v1beta1
 kind: ParseableTenant
+
 metadata:
   name: parseable
+
 spec:
+
+  deploymentOrder:
+    - server
+
   nodes:
-    - name: parseable-server
+    - name: parseable
+      type: server
       kind: Deployment
       replicas: 1
-      nodeType: server
+      k8sConfig: parseable-server
+      parseableConfig: parseable-server-config
+
+  k8sConfig:
+    - name: parseable-server
+      image: parseable/parseable:v0.3.0
+      service:
+        type: ClusterIP
+        ports:
+          - protocol: TCP
+            port: 80
+            targetPort: 8000
+      storageConfig:
+      - name: stage-volume
+        mountPath: "/parseable/staging"
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          storageClassName: "civo-volume"
+          resources:
+            requests:
+              storage: 10Gi
+      - name: data-volume
+        mountPath: "/parseable/data"
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          storageClassName: "civo-volume"
+          resources:
+            requests:
+              storage: 10Gi
+  
+  parseableConfig:
+    - name: parseable-server-config
       cliArgs: 
-      - local-store
-      k8sConfigGroup: k8s-server
-      parseableConfigGroup: server-config
-  deploymentOrder:
-  - server
-  k8sConfigGroup:
-  - name: k8s-server
-    image: parseable/parseable:v0.3.0
-    service:
-     type: ClusterIP
-     ports:
-      - protocol: TCP
-        port: 80
-        targetPort: 8000
-    storageConfig:
-    - name: stage-volume
-      mountPath: "/parseable/staging"
-      spec:
-        accessModes:
-        - ReadWriteOnce
-        storageClassName: "civo-volume"
-        resources:
-          requests:
-            storage: 10Gi
-    - name: data-volume
-      mountPath: "/parseable/data"
-      spec:
-        accessModes:
-        - ReadWriteOnce
-        storageClassName: "civo-volume"
-        resources:
-          requests:
-            storage: 10Gi
-  parseableConfigGroup:
-  - name: server-config
-    data: |-
-      P_ADDR=0.0.0.0:8000 
-      P_STAGING_DIR=./staging
-      P_FS_DIR=./data
-      P_USERNAME=admin
-      P_PASSWORD=admin
+        - local-store
+      env: |-
+        P_ADDR=0.0.0.0:8000 
+        P_STAGING_DIR=./staging
+        P_FS_DIR=./data
+        P_USERNAME=admin
+        P_PASSWORD=admin

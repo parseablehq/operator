@@ -48,12 +48,12 @@ func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.Parseabl
 		ib = newInternalBuilder(pt, r.Client, &nodeSpec.NodeSpec, getOwnerRef)
 		for _, parseableConfig := range pt.Spec.ParseableConfigGroup {
 
-			if nodeSpec.NodeSpec.ParseableConfigGroupName == parseableConfig.Name {
+			if nodeSpec.NodeSpec.ParseableConfig == parseableConfig.Name {
 				cm := *ib.makeParseableConfigMap(&parseableConfig, &nodeSpec.NodeSpec)
 				parseableConfigMap = append(parseableConfigMap, cm)
 				parseableConfigMapHash = append(parseableConfigMapHash, utils.ConfigMapHash{Object: &v1.ConfigMap{Data: cm.Data, ObjectMeta: cm.ObjectMeta}})
-				for _, k8sConfig := range pt.Spec.K8sConfigGroup {
-					if nodeSpec.NodeSpec.K8sConfigGroup == k8sConfig.Name {
+				for _, k8sConfig := range pt.Spec.K8sConfig {
+					if nodeSpec.NodeSpec.K8sConfig == k8sConfig.Name {
 						parseableDeploymentOrStatefulset = append(parseableDeploymentOrStatefulset, *ib.makeStsOrDeploy(&nodeSpec.NodeSpec, &k8sConfig, &k8sConfig.StorageConfig, &parseableConfig, parseableConfigMapHash))
 						parseableService = append(parseableService, *ib.makeService(&k8sConfig, &nodeSpec.NodeSpec))
 						for _, sc := range k8sConfig.StorageConfig {
