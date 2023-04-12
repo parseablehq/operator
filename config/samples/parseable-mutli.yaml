@@ -23,7 +23,7 @@ spec:
   deploymentOrder:
   - server
   k8sConfigGroup:
-  - name: k8s-server-new
+  - name: k8s-server
     image: parseable/parseable:v0.3.0
     service:
      type: ClusterIP

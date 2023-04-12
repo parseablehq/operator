@@ -44,7 +44,7 @@ func (ib *internalBuilder) makeExternalConfigMap() *builder.BuilderConfigMap {
 	return &builder.BuilderConfigMap{
 		CommonBuilder: builder.CommonBuilder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      ib.parseableTenant.GetName() + "-external",
+				Name:      makeConfigMapNameExternal(ib.parseableTenant.GetName()),
 				Namespace: ib.parseableTenant.GetNamespace(),
 				Labels:    ib.commonLabels,
 			},
@@ -60,13 +60,13 @@ func (ib *internalBuilder) makeExternalConfigMap() *builder.BuilderConfigMap {
 
 func (ib *internalBuilder) makeParseableConfigMap(
 	parseableConfigGroup *v1beta1.ParseableConfigGroupSpec,
-	nodeSpec *v1beta1.NodeSpec,
+	ptNode *v1beta1.NodeSpec,
 ) *builder.BuilderConfigMap {
 
 	configMap := &builder.BuilderConfigMap{
 		CommonBuilder: builder.CommonBuilder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      nodeSpec.Name + "-" + parseableConfigGroup.Name,
+				Name:      makeConfigMapName(ptNode.Name, parseableConfigGroup.Name),
 				Namespace: ib.parseableTenant.GetNamespace(),
 				Labels:    ib.commonLabels,
 			},
@@ -102,7 +102,7 @@ func (ib *internalBuilder) makeStsOrDeploy(
 	configCm := v1.EnvFromSource{
 		ConfigMapRef: &v1.ConfigMapEnvSource{
 			LocalObjectReference: v1.LocalObjectReference{
-				Name: parseableConfigGroup.Name,
+				Name: makeConfigMapName(ptNode.Name, parseableConfigGroup.Name),
 			},
 		},
 	}
@@ -112,7 +112,7 @@ func (ib *internalBuilder) makeStsOrDeploy(
 		externalCm := v1.EnvFromSource{
 			ConfigMapRef: &v1.ConfigMapEnvSource{
 				LocalObjectReference: v1.LocalObjectReference{
-					Name: ib.parseableTenant.Name + "external-cm",
+					Name: makeConfigMapNameExternal(ib.parseableTenant.GetName()),
 				},
 			},
 		}
@@ -146,16 +146,8 @@ func (ib *internalBuilder) makeStsOrDeploy(
 						ContainerPort: 8000,
 					},
 				},
-				Env: getEnv(*k8sConfigGroup, configHash),
-				EnvFrom: []v1.EnvFromSource{
-					{
-						ConfigMapRef: &v1.ConfigMapEnvSource{
-							LocalObjectReference: v1.LocalObjectReference{
-								Name: parseableConfigGroup.Name,
-							},
-						},
-					},
-				},
+				Env:          getEnv(*k8sConfigGroup, configHash),
+				EnvFrom:      envFrom,
 				VolumeMounts: getVolumeMounts(k8sConfigGroup, storageConfig),
 			},
 		},
@@ -166,7 +158,7 @@ func (ib *internalBuilder) makeStsOrDeploy(
 	deployment := builder.BuilderDeploymentStatefulSet{
 		CommonBuilder: builder.CommonBuilder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      ptNode.K8sConfigGroup + ptNode.Name,
+				Name:      ptNode.K8sConfigGroup + "-" + ptNode.Name,
 				Namespace: ib.parseableTenant.GetNamespace(),
 				Labels:    ib.commonLabels,
 			},
@@ -186,12 +178,12 @@ func (ib *internalBuilder) makeStsOrDeploy(
 func (ib *internalBuilder) makePvc(
 	sc *v1beta1.StorageConfig,
 	k8sConfig *v1beta1.K8sConfigGroupSpec,
-	nodeSpec *v1beta1.NodeSpec,
+	ptNode *v1beta1.NodeSpec,
 ) *builder.BuilderStorageConfig {
 	return &builder.BuilderStorageConfig{
 		CommonBuilder: builder.CommonBuilder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      nodeSpec.Name + "-" + k8sConfig.Name + "-" + sc.Name,
+				Name:      makePvcName(ptNode.Name, k8sConfig.Name, sc.Name),
 				Namespace: ib.parseableTenant.GetNamespace()},
 			Client:   ib.client,
 			CrObject: ib.parseableTenant,
@@ -259,7 +251,7 @@ func getVolumeMounts(k8sConfig *v1beta1.K8sConfigGroupSpec, storageConfig *[]v1b
 func getVolume(
 	k8sConfig *v1beta1.K8sConfigGroupSpec,
 	storageConfig *[]v1beta1.StorageConfig,
-	nodeSpec *v1beta1.NodeSpec,
+	ptNode *v1beta1.NodeSpec,
 ) []v1.Volume {
 	var volumeHolder = []v1.Volume{}
 
@@ -268,7 +260,7 @@ func getVolume(
 			Name: sc.Name,
 			VolumeSource: v1.VolumeSource{
 				PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
-					ClaimName: nodeSpec.Name + "-" + k8sConfig.Name + "-" + sc.Name,
+					ClaimName: makePvcName(ptNode.Name, k8sConfig.Name, sc.Name),
 				}},
 		})
 	}
@@ -292,4 +284,14 @@ func getEnv(k8sConfigGroup v1beta1.K8sConfigGroupSpec, configHash []utils.Config
 	envHolder = append(envHolder, hashHolder...)
 
 	return envHolder
+}
+
+func makeConfigMapName(nodeName, configGroupName string) string {
+	return nodeName + "-" + configGroupName
+}
+
+func makeConfigMapNameExternal(crName string) string { return crName + "-" + "ext" }
+
+func makePvcName(nodeName, k8sConfigGroupName, storageConfigName string) string {
+	return nodeName + "-" + k8sConfigGroupName + "-" + storageConfigName
 }

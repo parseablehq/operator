@@ -24,6 +24,7 @@ func ToNewBuilderDeploymentStatefulSet(builder []BuilderDeploymentStatefulSet) f
 func (s *Builder) ReconcileDeployOrSts() (controllerutil.OperationResult, error) {
 
 	for _, deployorsts := range s.DeploymentOrStatefulset {
+
 		if deployorsts.Kind == "Deployment" {
 			_, err := s.buildDeployment()
 			if err != nil {
@@ -62,17 +63,6 @@ func (b *BuilderDeploymentStatefulSet) makeDeployment() (*appsv1.Deployment, err
 			},
 		},
 	}, nil
-}
-
-func uni[T comparable](s []T) bool {
-	inResult := make(map[T]bool)
-
-	for _, str := range s {
-		if _, ok := inResult[str]; !ok {
-			return false
-		}
-	}
-	return true
 }
 
 func (b BuilderDeploymentStatefulSet) MakeStatefulSet() (*appsv1.StatefulSet, error) {
