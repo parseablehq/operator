@@ -1,6 +1,8 @@
 env:
-  RECONCILE_WAIT: "10s"            # Reconciliation delay
-  WATCH_NAMESPACE: ""              # Namespace to watch or empty string to watch all namespaces, To watch multiple namespaces add , into string. Ex: WATCH_NAMESPACE: "ns1,ns2,ns3"
+  # Reconciliation delay
+  RECONCILE_WAIT: "10s"
+  # Namespace to watch or empty string to watch all namespaces, To watch multiple namespaces add , into string. Ex: WATCH_NAMESPACE: "ns1,ns2,ns3"
+  WATCH_NAMESPACE: ""
 
 replicaCount: 1
 
