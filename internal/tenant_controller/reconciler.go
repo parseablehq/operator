@@ -46,7 +46,7 @@ func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.Parseabl
 
 	for _, nodeSpec := range nodeSpecs {
 		ib = newInternalBuilder(pt, r.Client, &nodeSpec.NodeSpec, getOwnerRef)
-		for _, parseableConfig := range pt.Spec.ParseableConfigGroup {
+		for _, parseableConfig := range pt.Spec.ParseableConfig {
 
 			if nodeSpec.NodeSpec.ParseableConfig == parseableConfig.Name {
 				cm := *ib.makeParseableConfigMap(&parseableConfig, &nodeSpec.NodeSpec)

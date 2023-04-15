@@ -278,8 +278,8 @@ func (in *ParseableTenantSpec) DeepCopyInto(out *ParseableTenantSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.ParseableConfigGroup != nil {
-		in, out := &in.ParseableConfigGroup, &out.ParseableConfigGroup
+	if in.ParseableConfig != nil {
+		in, out := &in.ParseableConfig, &out.ParseableConfig
 		*out = make([]ParseableConfigSpec, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
