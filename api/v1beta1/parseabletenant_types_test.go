@@ -34,9 +34,9 @@ spec:
       replicas: 1
       nodeType: server
       k8sConfigGroup: parseableserver
-      parseableConfigGroup: parseableserver
+      parseableConfig: parseableserver
   deploymentOrder:
-  - server
+    - server
   external:
     objectStore:
       spec:
@@ -66,7 +66,7 @@ spec:
         resources:
           requests:
             storage: 10Gi
-  parseableConfigGroup:
+  parseableConfig:
   - name: parseable-server
     args: "s3-store"
     data: |-

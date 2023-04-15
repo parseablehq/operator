@@ -14,8 +14,8 @@ import (
 
 type ib interface {
 	makeExternalConfigMap() *builder.BuilderConfigMap
-	makeParseableConfigMap(parseableConfigGroup *v1beta1.ParseableConfigSpec) *builder.BuilderConfigMap
-	makeStsOrDeploy(ptNode *v1beta1.NodeSpec, k8sConfigGroup *v1beta1.K8sConfigSpec, storageConfig *[]v1beta1.StorageConfig, parseableConfigGroup *v1beta1.ParseableConfigSpec) *builder.BuilderDeploymentStatefulSet
+	makeParseableConfigMap(parseableConfig *v1beta1.ParseableConfigSpec) *builder.BuilderConfigMap
+	makeStsOrDeploy(ptNode *v1beta1.NodeSpec, k8sConfigGroup *v1beta1.K8sConfigSpec, storageConfig *[]v1beta1.StorageConfig, parseableConfig *v1beta1.ParseableConfigSpec) *builder.BuilderDeploymentStatefulSet
 	makePvc(pvc *v1beta1.StorageConfig) *builder.BuilderStorageConfig
 	makeService(k8sConfig *v1beta1.K8sConfigSpec, selectorLabel map[string]string) *builder.BuilderService
 }
@@ -59,14 +59,14 @@ func (ib *internalBuilder) makeExternalConfigMap() *builder.BuilderConfigMap {
 }
 
 func (ib *internalBuilder) makeParseableConfigMap(
-	parseableConfigGroup *v1beta1.ParseableConfigSpec,
+	parseableConfig *v1beta1.ParseableConfigSpec,
 	ptNode *v1beta1.NodeSpec,
 ) *builder.BuilderConfigMap {
 
 	configMap := &builder.BuilderConfigMap{
 		CommonBuilder: builder.CommonBuilder{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      makeConfigMapName(ptNode.Name, parseableConfigGroup.Name),
+				Name:      makeConfigMapName(ptNode.Name, parseableConfig.Name),
 				Namespace: ib.parseableTenant.GetNamespace(),
 				Labels:    ib.commonLabels,
 			},
@@ -75,7 +75,7 @@ func (ib *internalBuilder) makeParseableConfigMap(
 			OwnerRef: *ib.ownerRef,
 		},
 		Data: map[string]string{
-			"data": fmt.Sprintf("%s", parseableConfigGroup.EnvVars),
+			"data": fmt.Sprintf("%s", parseableConfig.EnvVars),
 		},
 	}
 
@@ -86,19 +86,19 @@ func (ib *internalBuilder) makeStsOrDeploy(
 	ptNode *v1beta1.NodeSpec,
 	k8sConfigGroup *v1beta1.K8sConfigSpec,
 	storageConfig *[]v1beta1.StorageConfig,
-	parseableConfigGroup *v1beta1.ParseableConfigSpec,
+	parseableConfig *v1beta1.ParseableConfigSpec,
 	configHash []utils.ConfigMapHash,
 ) *builder.BuilderDeploymentStatefulSet {
 
 	b := false
 	args := []string{"parseable"}
-	args = append(args, parseableConfigGroup.CliArgs...)
+	args = append(args, parseableConfig.CliArgs...)
 
 	var envFrom []v1.EnvFromSource
 	configCm := v1.EnvFromSource{
 		ConfigMapRef: &v1.ConfigMapEnvSource{
 			LocalObjectReference: v1.LocalObjectReference{
-				Name: makeConfigMapName(ptNode.Name, parseableConfigGroup.Name),
+				Name: makeConfigMapName(ptNode.Name, parseableConfig.Name),
 			},
 		},
 	}
@@ -212,11 +212,11 @@ func (ib *internalBuilder) makeService(
 func makeLabels(pt *v1beta1.ParseableTenant, nodeSpec *v1beta1.NodeSpec) map[string]string {
 
 	return map[string]string{
-		"app":                  "parseable",
-		"custom_resource":      pt.Name,
-		"nodeType":             nodeSpec.Type,
-		"parseableConfigGroup": nodeSpec.ParseableConfig,
-		"k8sConfigGroup":       nodeSpec.K8sConfig,
+		"app":             "parseable",
+		"custom_resource": pt.Name,
+		"nodeType":        nodeSpec.Type,
+		"parseableConfig": nodeSpec.ParseableConfig,
+		"k8sConfigGroup":  nodeSpec.K8sConfig,
 	}
 }
 

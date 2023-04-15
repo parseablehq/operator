@@ -2622,7 +2622,7 @@ spec:
                   - type
                   type: object
                 type: array
-              parseableConfigGroup:
+              parseableConfig:
                 items:
                   properties:
                     cliArgs:
@@ -2643,7 +2643,7 @@ spec:
             - deploymentOrder
             - k8sConfig
             - nodes
-            - parseableConfigGroup
+            - parseableConfig
             type: object
           status:
             description: ParseableTenantStatus defines the observed state of ParseableTenant
