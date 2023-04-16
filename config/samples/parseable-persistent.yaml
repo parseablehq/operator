@@ -32,7 +32,7 @@ spec:
         spec:
           accessModes:
           - ReadWriteOnce
-          storageClassName: "do-block-storage"
+          storageClassName: "standard"
           resources:
             requests:
               storage: 10Gi
@@ -41,7 +41,7 @@ spec:
         spec:
           accessModes:
           - ReadWriteOnce
-          storageClassName: "do-block-storage"
+          storageClassName: "standard"
           resources:
             requests:
               storage: 10Gi

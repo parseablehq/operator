@@ -19,7 +19,7 @@ spec:
 
   k8sConfig:
     - name: parseable-server
-      image: parseable/parseable:v0.3.0
+      image: parseable/parseable:v0.4.0
       service:
         type: ClusterIP
         ports:
@@ -36,14 +36,21 @@ spec:
           name: data-volume
         - mountPath: /parseable/staging
           name: stage-volume
-  
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+
   parseableConfig:
     - name: parseable-server-config
       cliArgs: 
         - local-store
       env: |-
         P_ADDR=0.0.0.0:8000 
-        P_STAGING_DIR=./staging
+        P_STAGING_DIR=/parseable/staging
         P_FS_DIR=./data
         P_USERNAME=admin
         P_PASSWORD=admin
