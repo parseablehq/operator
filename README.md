@@ -32,6 +32,3 @@ helm repo add parseable https://charts.parseable.io
 helm install parseable-operator parseable/operator --create-namespace --namespace parseable-operator
 kubectl apply -f https://raw.githubusercontent.com/parseablehq/parseable/main/config/samples/parseable-ephemeral.yaml
 ```
-
-## Documentation
-
