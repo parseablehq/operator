@@ -1,5 +1,5 @@
 apiVersion: v2
-name: parseable-operator
+name: operator
 description: A Helm chart for Parseable Operator
 type: application
 version: 0.0.1
