@@ -1,4 +1,4 @@
-module github.com/parseablehq/parseable-operator
+module github.com/parseablehq/operator
 
 go 1.19
 
@@ -6,6 +6,7 @@ require (
 	github.com/go-logr/logr v1.2.4
 	github.com/onsi/ginkgo/v2 v2.9.2
 	github.com/onsi/gomega v1.27.6
+	github.com/datainfrahq/operator-runtime v0.0.0-20230416210109-3014824613c2
 	k8s.io/api v0.26.3
 	k8s.io/apimachinery v0.26.3
 	k8s.io/client-go v0.26.3

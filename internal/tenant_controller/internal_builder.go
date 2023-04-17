@@ -3,9 +3,9 @@ package parseabletenantcontroller
 import (
 	"fmt"
 
-	"github.com/parseablehq/parseable-operator/api/v1beta1"
-	"github.com/parseablehq/parseable-operator/pkg/operator-builder/builder"
-	"github.com/parseablehq/parseable-operator/pkg/operator-builder/utils"
+	"github.com/datainfrahq/operator-runtime/builder"
+	"github.com/datainfrahq/operator-runtime/utils"
+	"github.com/parseablehq/operator/api/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -84,21 +84,21 @@ func (ib *internalBuilder) makeParseableConfigMap(
 
 func (ib *internalBuilder) makeStsOrDeploy(
 	ptNode *v1beta1.NodeSpec,
-	k8sConfigGroup *v1beta1.K8sConfigSpec,
+	k8sConfigSpec *v1beta1.K8sConfigSpec,
 	storageConfig *[]v1beta1.StorageConfig,
-	parseableConfig *v1beta1.ParseableConfigSpec,
+	parseableConfigSpec *v1beta1.ParseableConfigSpec,
 	configHash []utils.ConfigMapHash,
 ) *builder.BuilderDeploymentStatefulSet {
 
 	b := false
 	args := []string{"parseable"}
-	args = append(args, parseableConfig.CliArgs...)
+	args = append(args, parseableConfigSpec.CliArgs...)
 
 	var envFrom []v1.EnvFromSource
 	configCm := v1.EnvFromSource{
 		ConfigMapRef: &v1.ConfigMapEnvSource{
 			LocalObjectReference: v1.LocalObjectReference{
-				Name: makeConfigMapName(ptNode.Name, parseableConfig.Name),
+				Name: makeConfigMapName(ptNode.Name, parseableConfigSpec.Name),
 			},
 		},
 	}
@@ -119,8 +119,8 @@ func (ib *internalBuilder) makeStsOrDeploy(
 	fsPolicy := v1.FSGroupChangeAlways
 
 	podSpec := v1.PodSpec{
-		NodeSelector: k8sConfigGroup.NodeSelector,
-		Tolerations:  getTolerations(k8sConfigGroup),
+		NodeSelector: k8sConfigSpec.NodeSelector,
+		Tolerations:  getTolerations(k8sConfigSpec),
 		SecurityContext: &v1.PodSecurityContext{
 			RunAsUser:           &runner,
 			RunAsGroup:          &runner,
@@ -130,9 +130,9 @@ func (ib *internalBuilder) makeStsOrDeploy(
 		Containers: []v1.Container{
 			{
 				Name:            ptNode.Name + "-" + ptNode.Type,
-				Image:           k8sConfigGroup.Image,
+				Image:           k8sConfigSpec.Image,
 				Args:            args,
-				ImagePullPolicy: k8sConfigGroup.ImagePullPolicy,
+				ImagePullPolicy: k8sConfigSpec.ImagePullPolicy,
 				SecurityContext: &v1.SecurityContext{
 					AllowPrivilegeEscalation: &b,
 				},
@@ -141,14 +141,14 @@ func (ib *internalBuilder) makeStsOrDeploy(
 						ContainerPort: 8000,
 					},
 				},
-				Env:          getEnv(*k8sConfigGroup, configHash),
+				Env:          getEnv(ib.parseableTenant, parseableConfigSpec, k8sConfigSpec, configHash),
 				EnvFrom:      envFrom,
-				VolumeMounts: getVolumeMounts(k8sConfigGroup, storageConfig),
-				Resources:    k8sConfigGroup.Resources,
+				VolumeMounts: getVolumeMounts(k8sConfigSpec, storageConfig),
+				Resources:    k8sConfigSpec.Resources,
 			},
 		},
-		Volumes:            getVolume(k8sConfigGroup, storageConfig, ptNode),
-		ServiceAccountName: k8sConfigGroup.ServiceAccountName,
+		Volumes:            getVolume(k8sConfigSpec, storageConfig, ptNode),
+		ServiceAccountName: k8sConfigSpec.ServiceAccountName,
 	}
 
 	deployment := builder.BuilderDeploymentStatefulSet{
@@ -260,16 +260,22 @@ func getVolume(
 	return volumeHolder
 }
 
-func getEnv(k8sConfigGroup v1beta1.K8sConfigSpec, configHash []utils.ConfigMapHash) []v1.EnvVar {
+func getEnv(
+	pt *v1beta1.ParseableTenant,
+	parseableConfigSpec *v1beta1.ParseableConfigSpec,
+	k8sConfigSpec *v1beta1.K8sConfigSpec,
+	configHash []utils.ConfigMapHash,
+) []v1.EnvVar {
 	var envs, hashHolder []v1.EnvVar
-	envs = append(envs, k8sConfigGroup.Env...)
+	envs = append(envs, k8sConfigSpec.Env...)
 
 	hashes, _ := utils.MakeConfigMapHash(configHash)
 
 	for _, cmhash := range hashes {
-		hashHolder = append(hashHolder, v1.EnvVar{Name: cmhash.Name, Value: cmhash.HashVaule})
+		if makeConfigMapName(pt.Name, parseableConfigSpec.Name) == cmhash.Name {
+			hashHolder = append(hashHolder, v1.EnvVar{Name: cmhash.Name, Value: cmhash.HashVaule})
+		}
 	}
-
 	envs = append(envs, hashHolder...)
 	return envs
 }

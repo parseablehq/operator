@@ -32,7 +32,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	parseableiov1beta1 "github.com/parseablehq/parseable-operator/api/v1beta1"
+	parseableiov1beta1 "github.com/parseablehq/operator/api/v1beta1"
 	//+kubebuilder:scaffold:imports
 )
 

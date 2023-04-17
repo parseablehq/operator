@@ -33,8 +33,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	parseableiov1beta1 "github.com/parseablehq/parseable-operator/api/v1beta1"
-	parseabletenantcontroller "github.com/parseablehq/parseable-operator/internal/tenant_controller"
+	parseableiov1beta1 "github.com/parseablehq/operator/api/v1beta1"
+	parseabletenantcontroller "github.com/parseablehq/operator/internal/tenant_controller"
 	//+kubebuilder:scaffold:imports
 )
 

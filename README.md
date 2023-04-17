@@ -17,7 +17,7 @@
 
 </div>
 
-Parseable is a lightweight, cloud native log observability engine. Written in Rust, Parseable is built for high ingestion rates and low resource consumption. It is compatible with all major log agents and can be configured to collect logs from any source. Read more in [Parseable docs](https://www.parseable.io/docs).
+Parseable is a lightweight, cloud native log observability engine. Written in Rust, Parseable is built for high ingestion rates and low resource consumption. It is compatible with all major log agents and can be configured to collect logs from any source. Read more in [Parseable docs](https://www.parseable.io/docs). Parseable operator spec adhere's to [Dsoi-Spec](https://github.com/datainfrahq/dsoi-spec) and uses [Operator-Runtime](https://github.com/datainfrahq/operator-runtime).
 
 ## Parseable Operator
 

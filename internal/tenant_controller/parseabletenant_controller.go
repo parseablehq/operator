@@ -31,8 +31,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/go-logr/logr"
-	"github.com/parseablehq/parseable-operator/api/v1beta1"
-	parseableiov1beta1 "github.com/parseablehq/parseable-operator/api/v1beta1"
+	"github.com/parseablehq/operator/api/v1beta1"
+	parseableiov1beta1 "github.com/parseablehq/operator/api/v1beta1"
 )
 
 // ParseableTenantReconciler reconciles a ParseableTenant object
