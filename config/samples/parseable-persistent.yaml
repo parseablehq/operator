@@ -12,7 +12,7 @@ spec:
   nodes:
     - name: parseable
       type: server
-      kind: Deployment
+      kind: Statefulset
       replicas: 1
       k8sConfig: parseable-server
       parseableConfig: parseable-server-config

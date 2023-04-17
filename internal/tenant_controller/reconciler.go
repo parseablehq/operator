@@ -5,10 +5,10 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 
+	"github.com/datainfrahq/operator-runtime/builder"
+	"github.com/datainfrahq/operator-runtime/utils"
 	"github.com/go-logr/logr"
-	"github.com/parseablehq/parseable-operator/api/v1beta1"
-	"github.com/parseablehq/parseable-operator/pkg/operator-builder/builder"
-	"github.com/parseablehq/parseable-operator/pkg/operator-builder/utils"
+	"github.com/parseablehq/operator/api/v1beta1"
 )
 
 func (r *ParseableTenantReconciler) do(ctx context.Context, pt *v1beta1.ParseableTenant, log logr.Logger) error {
