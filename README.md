@@ -21,7 +21,7 @@ Parseable is a lightweight, cloud native log observability engine. Written in Ru
 
 ## Parseable Operator
 
-The Parseable Kubernetes operator deploys and manages Parseable instances in a Kubernetes cluster. The operator allows creating multi-tenant Parseable instances.
+The Parseable Kubernetes operator deploys and manages Parseable instances in a Kubernetes cluster. The operator allows creating multi-tenant Parseable instances. Read deployment and CRD details in the [Operator documentation](https://www.parseable.io/docs/installation/kubernetes-operator).
 
 ## Installation
 
