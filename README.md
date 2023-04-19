@@ -17,7 +17,7 @@
 
 </div>
 
-Parseable is a lightweight, cloud native log observability engine. Written in Rust, Parseable is built for high ingestion rates and low resource consumption. It is compatible with all major log agents and can be configured to collect logs from any source. Read more in [Parseable docs](https://www.parseable.io/docs). Parseable operator spec adhere's to [Dsoi-Spec](https://github.com/datainfrahq/dsoi-spec) and uses [Operator-Runtime](https://github.com/datainfrahq/operator-runtime).
+Parseable is a lightweight, cloud native log observability engine. Written in Rust, Parseable is built for high ingestion rates and low resource consumption. It is compatible with all major log agents and can be configured to collect logs from any source. Read more in [Parseable docs](https://www.parseable.io/docs).
 
 ## Parseable Operator
 
@@ -30,5 +30,9 @@ The Parseable operator can be installed using Helm:
 ```bash
 helm repo add parseable https://charts.parseable.io
 helm install parseable-operator parseable/operator --create-namespace --namespace parseable-operator
-kubectl apply -f https://raw.githubusercontent.com/parseablehq/parseable/main/config/samples/parseable-ephemeral.yaml
+kubectl apply -f https://raw.githubusercontent.com/parseablehq/operator/main/config/samples/parseable-ephemeral.yaml
 ```
+
+## Attribution
+
+Parseable operator uses [DSOI Spec](https://github.com/datainfrahq/dsoi-spec) and [Operator Runtime](https://github.com/datainfrahq/operator-runtime) project to decouple application logic from the Operator CRD.
