@@ -7,7 +7,7 @@ metadata:
 spec:
 
   nodes:
-    - name: parseable-ingestion-1
+    - name: parseable-server
       type: server
       kind: Deployment
       replicas: 1
