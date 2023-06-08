@@ -74,9 +74,7 @@ func (ib *internalBuilder) makeParseableConfigMap(
 			CrObject: ib.parseableTenant,
 			OwnerRef: *ib.ownerRef,
 		},
-		Data: map[string]string{
-			"data": fmt.Sprintf("%s", parseableConfig.EnvVars),
-		},
+		Data: parseableConfig.EnvVars,
 	}
 
 	return configMap

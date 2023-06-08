@@ -73,9 +73,9 @@ type StorageConfig struct {
 }
 
 type ParseableConfigSpec struct {
-	Name    string   `json:"name"`
-	EnvVars string   `json:"env"`
-	CliArgs []string `json:"cliArgs"`
+	Name    string            `json:"name"`
+	EnvVars map[string]string `json:"env"`
+	CliArgs []string          `json:"cliArgs"`
 }
 
 type NodeSpec struct {

@@ -2613,7 +2613,9 @@ spec:
                         type: string
                       type: array
                     env:
-                      type: string
+                      additionalProperties:
+                        type: string
+                      type: object
                     name:
                       type: string
                   required:
