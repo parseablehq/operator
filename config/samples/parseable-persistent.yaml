@@ -50,9 +50,9 @@ spec:
     - name: parseable-server-config
       cliArgs: 
         - local-store
-      env: |-
-        P_ADDR=0.0.0.0:8000 
-        P_STAGING_DIR=./staging
-        P_FS_DIR=./data
-        P_USERNAME=admin
-        P_PASSWORD=admin
+      env:
+        P_ADDR: "0.0.0.0:8000"
+        P_STAGING_DIR: ""./staging"
+        P_FS_DIR: "./data"
+        P_USERNAME: "admin"
+        P_PASSWORD: "admin"
