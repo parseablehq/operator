@@ -1,0 +1,46 @@
+nodes:
+  - name: parseable-server
+    type: server
+    kind: Deployment
+    replicas: 1
+    k8sConfig: parseable-server
+    parseableConfig: parseable-server-config
+  
+k8sConfig:
+  - name: parseable-server
+    image: parseable/parseable:v0.4.0
+    service:
+      type: ClusterIP
+      ports:
+        - protocol: TCP
+          port: 80
+          targetPort: 8000
+    volumes:
+      - emptyDir: {}
+        name: stage-volume
+      - emptyDir: {}
+        name: data-volume
+    volumeMount:
+      - mountPath: /parseable/data
+        name: data-volume
+      - mountPath: /parseable/staging
+        name: stage-volume
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+parseableConfig:
+  - name: parseable-server-config
+    cliArgs: 
+      - local-store
+
+env:
+  P_ADDR: "0.0.0.0:8000"
+  P_STAGING_DIR: "/parseable/staging"
+  P_FS_DIR: "./data"
+  P_USERNAME: "admin"
+  P_PASSWORD: "admin"
