@@ -1,0 +1,27 @@
+apiVersion: parseable.io/v1beta1
+kind: ParseableTenant
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  {{- with .Values.nodes }}
+  nodes:
+    {{- toYaml . | nindent 2 }}
+  {{- end }}
+
+  deploymentOrder:
+    - server
+
+  {{- with .Values.k8sConfig }}
+  k8sConfig:
+    {{- toYaml . | nindent 2 }}
+  {{- end }}
+    
+  {{- with .Values.parseableConfig }}
+  parseableConfig:
+    {{- toYaml . | nindent 2 }}
+  {{- end }} 
+    env:
+    {{- range $key, $value :=  .Values.env }}
+      {{ $key }}: {{ tpl $value $ | quote }}
+    {{- end }}
